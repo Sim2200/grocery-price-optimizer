@@ -14,7 +14,6 @@ dependencies = [
     "pydantic>=2.6",
     "rapidfuzz>=3.6",
     "pulp>=3.3,<4",
-    "pandas>=2.1",
     "pillow>=10.1",
     "fastapi>=0.110",
     "uvicorn>=0.29",
@@ -39,4 +38,6 @@ addopts = "-q"
 filterwarnings = [
     # PuLP 3.x warns that its bundled CBC solver moves to an extra in 4.0; we pin <4.
     "ignore:PULP_CBC_CMD is deprecated:DeprecationWarning",
+    # Emitted inside Starlette's TestClient, not our code.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
 ]
