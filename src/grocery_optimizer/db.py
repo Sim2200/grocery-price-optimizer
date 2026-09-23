@@ -95,7 +95,7 @@ class PriceDB:
         self.path = str(path)
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        # check_same_thread=False lets Streamlit reuse the connection across reruns.
+        # FastAPI runs sync endpoints in a thread pool; the API opens one connection per request.
         self.conn = sqlite3.connect(self.path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
@@ -103,6 +103,12 @@ class PriceDB:
 
     def close(self) -> None:
         self.conn.close()
+
+    def reset_data(self) -> None:
+        """Delete all receipts, prices, aliases and stores (products are kept)."""
+        for table in ("price_observations", "line_items", "receipts", "aliases", "stores"):
+            self.conn.execute(f"DELETE FROM {table}")
+        self.conn.commit()
 
     # ----- stores & products ---------------------------------------------
     def upsert_store(self, name: str) -> int:

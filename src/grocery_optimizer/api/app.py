@@ -1,0 +1,306 @@
+"""FastAPI application.
+
+Run:  uvicorn --factory grocery_optimizer.api.app:create_app --reload
+Docs: http://localhost:8000/docs  (OpenAPI, generated from the Pydantic models)
+
+Design notes
+- The API is a thin layer: every endpoint calls into the core package
+  (ingest, matching, pricing, optimizer) so the same logic is used by the
+  CLI and the tests.
+- Receipt upload is two-step on purpose: POST /api/receipts/extract returns a
+  *draft* with suggested product matches; the UI lets the user fix it, then
+  POST /api/receipts saves it. Nothing unreviewed silently enters the price DB.
+- One SQLite connection per request (a FastAPI dependency) keeps things
+  thread-safe without a connection pool.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterator
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+
+from ..catalog import load_catalog
+from ..config import LLM_MODEL, DEFAULT_DB_PATH, PROJECT_ROOT
+from ..db import PriceDB
+from ..extraction import (
+    VisionReceiptExtractor,
+    DemoReceiptExtractor,
+    ExtractionError,
+    ReceiptExtractor,
+    get_extractor,
+)
+from ..ingest import (
+    add_custom_product,
+    build_matcher,
+    load_demo_data,
+    match_receipt,
+    save_receipt,
+)
+from ..manual_entry import ManualEntryError, receipts_from_csv
+from ..matching import MatchResult
+from ..optimizer import ListItem, Plan
+from ..planning import plan_trip, read_shopping_list
+from ..pricing import current_prices
+from ..schemas import Receipt, consistency_warnings
+from ..units import COMPARABLE_UNITS
+from . import models as m
+
+FRONTEND_DIST = PROJECT_ROOT / "web" / "dist"
+SAMPLE_LIST = PROJECT_ROOT / "data" / "sample_shopping_list.csv"
+
+
+def create_app(
+    db_path: str | Path = DEFAULT_DB_PATH,
+    extractor: ReceiptExtractor | None = None,
+    use_llm_matching: bool = False,
+) -> FastAPI:
+    """App factory. Tests pass a temp DB path and a fake extractor."""
+    app = FastAPI(
+        title="Grocery Price Optimizer API",
+        version="0.1.0",
+        description="Receipts in, cheapest shopping plan out. Sample data is SYNTHETIC.",
+    )
+    app.state.db_path = str(db_path)
+    app.state.extractor = extractor or get_extractor()
+    app.state.use_llm_matching = use_llm_matching
+
+    # Vite dev server runs on :5173 and calls the API on :8000.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    setup_db = PriceDB(app.state.db_path)
+    setup_db.sync_catalog(load_catalog())
+    setup_db.close()
+
+    def get_db(request: Request) -> Iterator[PriceDB]:
+        db = PriceDB(request.app.state.db_path)
+        try:
+            yield db
+        finally:
+            db.close()
+
+    # ----- meta --------------------------------------------------------------
+    @app.get("/api/health", response_model=m.Health, tags=["meta"])
+    def health(request: Request) -> m.Health:
+        ext = request.app.state.extractor
+        name = "llm" if isinstance(ext, VisionReceiptExtractor) else (
+            "demo" if isinstance(ext, DemoReceiptExtractor) else type(ext).__name__)
+        return m.Health(status="ok", demo_mode=isinstance(ext, DemoReceiptExtractor),
+                        extractor=name, model=LLM_MODEL)
+
+    @app.post("/api/demo/load", response_model=m.DemoLoadOut, tags=["meta"])
+    def load_demo(body: m.DemoLoadIn, db: PriceDB = Depends(get_db)) -> m.DemoLoadOut:
+        """Load the bundled SYNTHETIC receipts (optionally wiping existing data first)."""
+        if body.reset:
+            db.reset_data()
+        return m.DemoLoadOut(receipts_loaded=load_demo_data(db))
+
+    @app.get("/api/demo/shopping-list", response_model=list[m.ShoppingItem], tags=["meta"])
+    def sample_shopping_list() -> list[m.ShoppingItem]:
+        items = read_shopping_list(SAMPLE_LIST.read_text())
+        return [m.ShoppingItem(product=i.product, quantity=i.quantity) for i in items]
+
+    # ----- products & stores ----------------------------------------------------
+    @app.get("/api/stores", response_model=list[str], tags=["catalog"])
+    def list_stores(db: PriceDB = Depends(get_db)) -> list[str]:
+        return db.store_names()
+
+    @app.get("/api/products", response_model=list[m.ProductOut], tags=["catalog"])
+    def list_products(db: PriceDB = Depends(get_db)) -> list[m.ProductOut]:
+        return [m.ProductOut(name=p.name, unit=p.unit, category=p.category) for p in db.products()]
+
+    @app.post("/api/products", response_model=m.ProductOut, status_code=201, tags=["catalog"])
+    def create_product(body: m.ProductIn, db: PriceDB = Depends(get_db)) -> m.ProductOut:
+        if body.unit not in COMPARABLE_UNITS:
+            raise HTTPException(422, f"unit must be one of {', '.join(COMPARABLE_UNITS)}")
+        product = add_custom_product(db, body.name, body.unit, body.category)
+        return m.ProductOut(name=product.name, unit=product.unit, category=product.category)
+
+    # ----- receipts ----------------------------------------------------------------
+    def _draft(receipt: Receipt, db: PriceDB, source: str, file_name: str | None,
+               use_llm: bool) -> m.DraftReceipt:
+        matches = match_receipt(receipt, build_matcher(db, use_llm=use_llm))
+        lines = [
+            m.LineMatch(
+                item=item, product=mr.product, match_method=mr.method, match_score=mr.score,
+                needs_review=mr.needs_review,
+                candidates=[m.Candidate(product=p, score=s) for p, s in mr.candidates],
+            )
+            for item, mr in zip(receipt.line_items, matches, strict=True)
+        ]
+        return m.DraftReceipt(store=receipt.store, date=receipt.date, total=receipt.total,
+                              lines=lines, warnings=consistency_warnings(receipt),
+                              source=source, file_name=file_name)
+
+    @app.post("/api/receipts/extract", response_model=m.DraftReceipt, tags=["receipts"])
+    def extract_receipt(request: Request, file: UploadFile = File(...),
+                        db: PriceDB = Depends(get_db)) -> m.DraftReceipt:
+        """Upload an image/PDF. Returns a draft with suggested matches; nothing is saved yet.
+
+        A plain (sync) endpoint on purpose: the LLM call blocks, and FastAPI
+        runs sync endpoints in a worker thread so the event loop stays free."""
+        data = file.file.read()
+        if not data:
+            raise HTTPException(400, "Empty file")
+        extractor = request.app.state.extractor
+        try:
+            receipt = extractor.extract(data, file.filename or "upload")
+        except ExtractionError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        source = "demo" if isinstance(extractor, DemoReceiptExtractor) else "llm"
+        return _draft(receipt, db, source, file.filename, request.app.state.use_llm_matching)
+
+    @app.post("/api/receipts/parse-csv", response_model=list[m.DraftReceipt], tags=["receipts"])
+    def parse_csv(body: m.CsvIn, db: PriceDB = Depends(get_db)) -> list[m.DraftReceipt]:
+        """Manual entry: CSV text -> drafts for review (one per store + date)."""
+        try:
+            receipts = receipts_from_csv(body.csv)
+        except ManualEntryError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return [_draft(r, db, "manual", None, False) for r in receipts]
+
+    @app.post("/api/receipts", response_model=m.SavedReceipt, status_code=201, tags=["receipts"])
+    def create_receipt(body: m.SaveReceiptIn, db: PriceDB = Depends(get_db)) -> m.SavedReceipt:
+        """Save a reviewed receipt. Lines with match_method='user' become aliases."""
+        known = {p.name for p in db.products()}
+        unknown = {line.product for line in body.lines if line.product and line.product not in known}
+        if unknown:
+            raise HTTPException(422, f"Unknown products: {', '.join(sorted(unknown))}")
+        matches = [
+            MatchResult(line.item.raw_name, line.product, line.match_score or 0.0,
+                        line.match_method, False)
+            for line in body.lines
+        ]
+        receipt_id = save_receipt(db, body.to_receipt(), matches, body.source, body.file_name)
+        return m.SavedReceipt(receipt_id=receipt_id)
+
+    @app.get("/api/receipts", response_model=list[m.ReceiptSummary], tags=["receipts"])
+    def list_receipts(db: PriceDB = Depends(get_db)) -> list[dict]:
+        return db.receipts()
+
+    @app.get("/api/receipts/{receipt_id}/items", response_model=list[m.LineItemOut], tags=["receipts"])
+    def receipt_items(receipt_id: int, db: PriceDB = Depends(get_db)) -> list[dict]:
+        return db.line_items(receipt_id=receipt_id)
+
+    @app.delete("/api/receipts/{receipt_id}", status_code=204, tags=["receipts"])
+    def delete_receipt(receipt_id: int, db: PriceDB = Depends(get_db)) -> None:
+        db.delete_receipt(receipt_id)
+
+    @app.get("/api/line-items", response_model=list[m.LineItemOut], tags=["receipts"])
+    def list_line_items(unmatched: bool = False, db: PriceDB = Depends(get_db)) -> list[dict]:
+        return db.line_items(only_unmatched=unmatched)
+
+    @app.patch("/api/line-items/{line_item_id}", response_model=m.LineItemOut, tags=["receipts"])
+    def rematch(line_item_id: int, body: m.RematchIn, db: PriceDB = Depends(get_db)) -> dict:
+        """Correct a saved line's product; its price observation is recomputed."""
+        try:
+            db.rematch_line_item(line_item_id, body.product, remember=body.remember)
+        except KeyError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        rows = [r for r in db.line_items() if r["id"] == line_item_id]
+        if not rows:
+            raise HTTPException(404, "Line item not found")
+        return rows[0]
+
+    # ----- aliases -----------------------------------------------------------------
+    @app.get("/api/aliases", response_model=list[m.AliasOut], tags=["catalog"])
+    def list_aliases(db: PriceDB = Depends(get_db)) -> list[dict]:
+        return db.alias_rows()
+
+    @app.put("/api/aliases", response_model=list[m.AliasOut], tags=["catalog"])
+    def put_alias(body: m.AliasIn, db: PriceDB = Depends(get_db)) -> list[dict]:
+        try:
+            db.set_alias(body.raw_name, body.product, source="user")
+        except KeyError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return db.alias_rows()
+
+    @app.delete("/api/aliases/{alias}", status_code=204, tags=["catalog"])
+    def delete_alias(alias: str, db: PriceDB = Depends(get_db)) -> None:
+        db.delete_alias(alias)
+
+    # ----- prices ------------------------------------------------------------------
+    @app.get("/api/prices", response_model=m.PriceTable, tags=["prices"])
+    def price_table(method: str = "weighted", db: PriceDB = Depends(get_db)) -> m.PriceTable:
+        if method not in ("weighted", "latest"):
+            raise HTTPException(422, "method must be 'weighted' or 'latest'")
+        estimates = current_prices(db.observations(), method=method)
+        rows = []
+        for product in db.products():
+            cells = {store: m.PriceCell(price=est.price, n_observations=est.n_observations,
+                                        last_seen=est.last_seen)
+                     for (prod, store), est in estimates.items() if prod == product.name}
+            if not cells:
+                continue
+            cheapest = min(cells, key=lambda s: cells[s].price)
+            rows.append(m.PriceRow(product=product.name, unit=product.unit,
+                                   category=product.category, prices=cells,
+                                   cheapest_store=cheapest))
+        return m.PriceTable(method=method, stores=db.store_names(), rows=rows)
+
+    @app.get("/api/prices/history", response_model=list[m.PricePoint], tags=["prices"])
+    def price_history(product: str, db: PriceDB = Depends(get_db)) -> list[m.PricePoint]:
+        return [m.PricePoint(store=o.store, date=o.observed_date, unit_price=round(o.unit_price, 4))
+                for o in db.observations() if o.product == product]
+
+    # ----- plan --------------------------------------------------------------------
+    @app.post("/api/plan", response_model=m.PlanResult, tags=["plan"])
+    def plan(body: m.PlanIn, db: PriceDB = Depends(get_db)) -> m.PlanResult:
+        """Assign each item to a store to minimise item cost + trip cost (MILP)."""
+        units = {p.name: p.unit for p in db.products()}
+        items = [ListItem(i.product, i.quantity) for i in body.items]
+        trip_cost: float | dict[str, float] = body.trip_cost
+        stores = body.stores if body.stores is not None else db.store_names()
+        if body.trip_costs:
+            trip_cost = {s: body.trip_costs.get(s, body.trip_cost) for s in stores}
+        result = plan_trip(db, items, stores, trip_cost, body.max_stores, body.price_method)
+        quantities = {}
+        for it in items:
+            quantities[it.product] = quantities.get(it.product, 0.0) + it.quantity
+
+        def to_out(plan_obj: Plan) -> m.PlanOut:
+            stops = []
+            for store, lines in plan_obj.by_store().items():
+                plan_lines = [
+                    m.PlanLine(product=p, quantity=quantities[p], unit=units.get(p, ""),
+                               unit_price=round(cost / quantities[p], 4), cost=cost)
+                    for p, cost in lines
+                ]
+                stops.append(m.StoreStop(store=store, trip_cost=plan_obj.trip_costs[store],
+                                         items=plan_lines,
+                                         subtotal=round(sum(pl.cost for pl in plan_lines), 2)))
+            return m.PlanOut(name=plan_obj.name, status=plan_obj.status, total=plan_obj.total,
+                             items_total=plan_obj.items_total, trips_total=plan_obj.trips_total,
+                             stops=stops)
+
+        savings = result.savings_vs_single_store()
+        return m.PlanResult(
+            optimal=to_out(result.optimal),
+            single_store=to_out(result.single_store) if result.single_store else None,
+            greedy=to_out(result.greedy),
+            single_store_candidates=result.single_store_candidates,
+            savings_vs_single_store=m.Savings(amount=savings[0], percent=savings[1]) if savings else None,
+            unavailable=result.optimal.unavailable,
+        )
+
+    # ----- serve the built React app (production-style single process) -----------
+    if FRONTEND_DIST.exists():
+        @app.get("/{path:path}", include_in_schema=False)
+        def spa(path: str) -> FileResponse:
+            if path.startswith("api/"):
+                raise HTTPException(404, "Not found")
+            candidate = (FRONTEND_DIST / path).resolve()
+            if path and candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
+                return FileResponse(candidate)
+            return FileResponse(FRONTEND_DIST / "index.html")
+
+    return app
+
