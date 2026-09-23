@@ -1,7 +1,7 @@
 anthropic>=1.0
 pydantic>=2.6
 rapidfuzz>=3.6
-pulp>=2.8
+pulp>=3.3,<4
 pandas>=2.1
 pillow>=10.1
 streamlit>=1.35

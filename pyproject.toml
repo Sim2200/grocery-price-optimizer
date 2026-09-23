@@ -13,7 +13,7 @@ dependencies = [
     "anthropic>=1.0",
     "pydantic>=2.6",
     "rapidfuzz>=3.6",
-    "pulp>=2.8",
+    "pulp>=3.3,<4",
     "pandas>=2.1",
     "pillow>=10.1",
     "streamlit>=1.35",
@@ -35,3 +35,7 @@ grocery_optimizer = ["data/*.json"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = [
+    # PuLP 3.x warns that its bundled CBC solver moves to an extra in 4.0; we pin <4.
+    "ignore:PULP_CBC_CMD is deprecated:DeprecationWarning",
+]
