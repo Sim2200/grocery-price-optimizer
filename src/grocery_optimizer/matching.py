@@ -117,8 +117,11 @@ class ProductMatcher:
         aliases: dict[str, str] | None = None,
         threshold: float = FUZZY_ACCEPT_THRESHOLD,
         llm_fallback: LLMFallback | None = None,
+        use_rules: bool = True,
     ) -> None:
         self.catalog = catalog
+        # use_rules=False skips abbreviation/brand/size cleanup (for ablation in the eval).
+        self.use_rules = use_rules
         self.aliases = {normalize_alias_key(k): v for k, v in (aliases or {}).items()}
         self.threshold = threshold
         self.llm_fallback = llm_fallback
@@ -129,7 +132,7 @@ class ProductMatcher:
 
     def rank(self, raw_name: str, top_k: int = 5) -> list[tuple[str, float]]:
         """Score every catalog product against a raw name, best first."""
-        cleaned = clean_name(raw_name)
+        cleaned = clean_name(raw_name) if self.use_rules else normalize_alias_key(raw_name)
         is_organic = "organic" in cleaned.split()
         query = _strip_organic(cleaned)
         scored: list[tuple[str, float]] = []
