@@ -17,11 +17,11 @@ setup-web:
 
 dev:              ## run API (:8000) and React dev server (:5173) together; Ctrl+C stops both
 	@trap 'kill 0' INT TERM EXIT; \
-	$(UVICORN) --reload --port 8000 & \
+	$(UVICORN) --reload --reload-dir src --port 8000 & \
 	cd web && npm run dev
 
 api:              ## API only, with auto-reload. Docs at http://localhost:8000/docs
-	$(UVICORN) --reload --port 8000
+	$(UVICORN) --reload --reload-dir src --port 8000
 
 web:              ## React dev server only
 	cd web && npm run dev

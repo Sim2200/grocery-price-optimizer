@@ -25,6 +25,9 @@ DEFAULT_DB_PATH = Path(os.environ.get("GROCERY_DB", PROJECT_ROOT / "data" / "gro
 # the LLM model used for receipt extraction and the optional matching fallback.
 LLM_MODEL = os.environ.get("GROCERY_LLM_MODEL", "")
 
+# Ask the LLM to resolve product names the fuzzy matcher is unsure about (needs a key).
+LLM_MATCHING = os.environ.get("GROCERY_LLM_MATCHING") == "1"
+
 # Fuzzy-match score (0-100) at or above which a match is accepted automatically.
 FUZZY_ACCEPT_THRESHOLD = 85.0
 

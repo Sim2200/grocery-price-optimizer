@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from ..catalog import load_catalog
-from ..config import LLM_MODEL, DEFAULT_DB_PATH, PROJECT_ROOT
+from ..config import LLM_MODEL, DEFAULT_DB_PATH, LLM_MATCHING, PROJECT_ROOT
 from ..db import PriceDB
 from ..extraction import (
     VisionReceiptExtractor,
@@ -56,7 +56,7 @@ SAMPLE_LIST = PROJECT_ROOT / "data" / "sample_shopping_list.csv"
 def create_app(
     db_path: str | Path = DEFAULT_DB_PATH,
     extractor: ReceiptExtractor | None = None,
-    use_llm_matching: bool = False,
+    use_llm_matching: bool = LLM_MATCHING,
 ) -> FastAPI:
     """App factory. Tests pass a temp DB path and a fake extractor."""
     app = FastAPI(
