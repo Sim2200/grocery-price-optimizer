@@ -1,0 +1,95 @@
+{
+  "store": "Lidl",
+  "date": "2026-09-01",
+  "line_items": [
+    {
+      "raw_name": "Tortilla chips 13 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 1.89,
+      "line_total": 1.89
+    },
+    {
+      "raw_name": "Jasmine rice 32 oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 2.64,
+      "line_total": 7.92
+    },
+    {
+      "raw_name": "Carrots 2 lb",
+      "quantity": 1,
+      "unit": "each",
+      "size": "2 lb",
+      "unit_price": 1.71,
+      "line_total": 1.71
+    },
+    {
+      "raw_name": "Butter unsalted 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 4.02,
+      "line_total": 4.02
+    },
+    {
+      "raw_name": "Chicken breast boneless",
+      "quantity": 3.19,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 4.05,
+      "line_total": 12.92
+    },
+    {
+      "raw_name": "Baby spinach, organic 5 oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "5 oz",
+      "unit_price": 3.11,
+      "line_total": 9.33
+    },
+    {
+      "raw_name": "Ground coffee 12 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 6.11,
+      "line_total": 6.11
+    },
+    {
+      "raw_name": "Onions yellow",
+      "quantity": 0.93,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.96,
+      "line_total": 0.89
+    },
+    {
+      "raw_name": "Whole milk 1 gal",
+      "quantity": 3,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.16,
+      "line_total": 9.48
+    },
+    {
+      "raw_name": "Rolled oats 42 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "42 oz",
+      "unit_price": 4.39,
+      "line_total": 8.78
+    },
+    {
+      "raw_name": "Tomatoes Roma",
+      "quantity": 2.07,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.43,
+      "line_total": 2.96
+    }
+  ],
+  "total": 66.01
+}

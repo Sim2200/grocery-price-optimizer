@@ -1,0 +1,119 @@
+{
+  "store": "Giant",
+  "date": "2026-06-07",
+  "line_items": [
+    {
+      "raw_name": "GNT BLK BEANS 15 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "15 oz",
+      "unit_price": 0.9,
+      "line_total": 0.9
+    },
+    {
+      "raw_name": "GNT ALMD MLK UNSWT 64 FL OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "64 fl oz",
+      "unit_price": 3.29,
+      "line_total": 6.58
+    },
+    {
+      "raw_name": "GNT LG EGGS 12 CT",
+      "quantity": 3,
+      "unit": "each",
+      "size": "12 ct",
+      "unit_price": 3.74,
+      "line_total": 11.22
+    },
+    {
+      "raw_name": "ORG BANANAS",
+      "quantity": 2.21,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.96,
+      "line_total": 2.12
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 1.09,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.66,
+      "line_total": 12.71
+    },
+    {
+      "raw_name": "GNT ORG BBY SPINACH 5 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "5 oz",
+      "unit_price": 3.93,
+      "line_total": 3.93
+    },
+    {
+      "raw_name": "HASS AVOCADO",
+      "quantity": 1,
+      "unit": "each",
+      "size": null,
+      "unit_price": 1.33,
+      "line_total": 1.33
+    },
+    {
+      "raw_name": "GNT GRND COFFEE 12 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 6.73,
+      "line_total": 20.19
+    },
+    {
+      "raw_name": "GNT 2% MILK 1 GAL",
+      "quantity": 3,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.34,
+      "line_total": 10.02
+    },
+    {
+      "raw_name": "BNLS CHKN BRST",
+      "quantity": 2.92,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 4.15,
+      "line_total": 12.12
+    },
+    {
+      "raw_name": "GNT FRZ BROCCOLI 12 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 1.6,
+      "line_total": 3.2
+    },
+    {
+      "raw_name": "ROMA TOMS",
+      "quantity": 2.33,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.83,
+      "line_total": 4.26
+    },
+    {
+      "raw_name": "BANANAS",
+      "quantity": 3.33,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.69,
+      "line_total": 2.3
+    },
+    {
+      "raw_name": "GNT TORT CHIPS 13 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 2.72,
+      "line_total": 8.16
+    }
+  ],
+  "total": 99.04
+}

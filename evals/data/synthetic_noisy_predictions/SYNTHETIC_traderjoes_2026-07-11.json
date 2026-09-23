@@ -1,0 +1,127 @@
+{
+  "store": "Trader Joe's",
+  "date": "2026-07-11",
+  "line_items": [
+    {
+      "raw_name": "TJ ALMD MLK UNSWT 64 FL OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "64 fl oz",
+      "unit_price": 3.21,
+      "line_total": 6.42
+    },
+    {
+      "raw_name": "TJ GRND COFFEE 12 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 7.29,
+      "line_total": 7.29
+    },
+    {
+      "raw_name": "TJ SPAGHETTI 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.29,
+      "line_total": 1.29
+    },
+    {
+      "raw_name": "TJ EVOO 1 L",
+      "quantity": 2,
+      "unit": "each",
+      "size": "1 l",
+      "unit_price": 10.04,
+      "line_total": 20.08
+    },
+    {
+      "raw_name": "TJ BTR UNSLTD 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 4.87,
+      "line_total": 4.87
+    },
+    {
+      "raw_name": "TJ GALA APPLES",
+      "quantity": 3.29,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.72,
+      "line_total": 5.66
+    },
+    {
+      "raw_name": "TJ TORT CHIPS 13 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 1.76,
+      "line_total": 3.52
+    },
+    {
+      "raw_name": "BLK BEANS 15 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "15 oz",
+      "unit_price": 0.94,
+      "line_total": 2.82
+    },
+    {
+      "raw_name": "FRZ BROCCOLI 12 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 1.18,
+      "line_total": 1.18
+    },
+    {
+      "raw_name": "TJ ATL SALMON FLT",
+      "quantity": 2.82,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.49,
+      "line_total": 32.4
+    },
+    {
+      "raw_name": "HASS AVOCADO",
+      "quantity": 2,
+      "unit": "each",
+      "size": null,
+      "unit_price": 1.41,
+      "line_total": 2.82
+    },
+    {
+      "raw_name": "TJ WW BREAD 20 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 3.01,
+      "line_total": 3.01
+    },
+    {
+      "raw_name": "TJ YLW ONIONS",
+      "quantity": 3.38,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.79,
+      "line_total": 2.67
+    },
+    {
+      "raw_name": "WHL MILK 1 GAL",
+      "quantity": 1,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.05,
+      "line_total": 3.05
+    },
+    {
+      "raw_name": "BAG FEE",
+      "quantity": 1,
+      "unit": "each",
+      "size": null,
+      "unit_price": 0.1,
+      "line_total": 0.1
+    }
+  ],
+  "total": 100.1
+}

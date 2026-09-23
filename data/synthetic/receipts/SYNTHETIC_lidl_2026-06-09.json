@@ -1,0 +1,103 @@
+{
+  "store": "Lidl",
+  "date": "2026-06-09",
+  "line_items": [
+    {
+      "raw_name": "Whole wheat bread 20 oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 2.03,
+      "line_total": 6.09
+    },
+    {
+      "raw_name": "Cheddar sharp 8 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "8 oz",
+      "unit_price": 3.07,
+      "line_total": 3.07
+    },
+    {
+      "raw_name": "Blueberries 6 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 2.91,
+      "line_total": 5.82
+    },
+    {
+      "raw_name": "Atlantic salmon fillet",
+      "quantity": 1.45,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 9.9,
+      "line_total": 14.36
+    },
+    {
+      "raw_name": "Peanut butter creamy 16 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.66,
+      "line_total": 3.32
+    },
+    {
+      "raw_name": "Jasmine rice 32 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 2.31,
+      "line_total": 2.31
+    },
+    {
+      "raw_name": "Orange juice 52 fl oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "52 fl oz",
+      "unit_price": 3.94,
+      "line_total": 7.88
+    },
+    {
+      "raw_name": "Bananas, organic",
+      "quantity": 1.39,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.66,
+      "line_total": 0.92
+    },
+    {
+      "raw_name": "Ground coffee 12 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 6.46,
+      "line_total": 6.46
+    },
+    {
+      "raw_name": "Chicken breast boneless",
+      "quantity": 1.34,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 3.91,
+      "line_total": 5.24
+    },
+    {
+      "raw_name": "Apples Gala",
+      "quantity": 0.81,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.56,
+      "line_total": 1.26
+    },
+    {
+      "raw_name": "Tomatoes Roma",
+      "quantity": 0.91,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.34,
+      "line_total": 1.22
+    }
+  ],
+  "total": 57.95
+}

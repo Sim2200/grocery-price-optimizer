@@ -1,0 +1,119 @@
+{
+  "store": "Giant",
+  "date": "2026-08-02",
+  "line_items": [
+    {
+      "raw_name": "ORG BANANAS",
+      "quantity": 2.25,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.94,
+      "line_total": 2.11
+    },
+    {
+      "raw_name": "GNT OLD FASHIONED OATS 18 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "18 oz",
+      "unit_price": 1.67,
+      "line_total": 3.34
+    },
+    {
+      "raw_name": "GNT TORT CHIPS 13 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 2.58,
+      "line_total": 5.16
+    },
+    {
+      "raw_name": "GNT WW BREAD 20 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 3.69,
+      "line_total": 3.69
+    },
+    {
+      "raw_name": "GNT ORG BBY SPINACH 5 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "5 oz",
+      "unit_price": 4.24,
+      "line_total": 12.72
+    },
+    {
+      "raw_name": "GNT JASMINE RICE 32 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 4.58,
+      "line_total": 4.58
+    },
+    {
+      "raw_name": "GNT GRND BF 85/15 16 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 5.89,
+      "line_total": 11.78
+    },
+    {
+      "raw_name": "GALA APPLES",
+      "quantity": 2.82,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 2.13,
+      "line_total": 6.01
+    },
+    {
+      "raw_name": "GNT EVOO 16.9 FL OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16.9 fl oz",
+      "unit_price": 8.56,
+      "line_total": 8.56
+    },
+    {
+      "raw_name": "BNLS CHKN BRST",
+      "quantity": 3.22,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 4.22,
+      "line_total": 13.59
+    },
+    {
+      "raw_name": "GNT FRZ BROCCOLI 12 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 1.63,
+      "line_total": 1.63
+    },
+    {
+      "raw_name": "GNT CLSC HUMMUS 10 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "10 oz",
+      "unit_price": 2.83,
+      "line_total": 5.66
+    },
+    {
+      "raw_name": "GNT CRMY PB 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.48,
+      "line_total": 2.48
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 1.61,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.24,
+      "line_total": 18.1
+    }
+  ],
+  "total": 99.41
+}

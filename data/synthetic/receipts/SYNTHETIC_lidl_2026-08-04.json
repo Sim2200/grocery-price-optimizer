@@ -1,0 +1,95 @@
+{
+  "store": "Lidl",
+  "date": "2026-08-04",
+  "line_items": [
+    {
+      "raw_name": "Ground beef 85/15 16 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 5.01,
+      "line_total": 10.02
+    },
+    {
+      "raw_name": "Butter unsalted 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 3.8,
+      "line_total": 3.8
+    },
+    {
+      "raw_name": "Spaghetti 16 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.05,
+      "line_total": 2.1
+    },
+    {
+      "raw_name": "Bananas",
+      "quantity": 3.41,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.64,
+      "line_total": 2.18
+    },
+    {
+      "raw_name": "Peanut butter creamy 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.72,
+      "line_total": 1.72
+    },
+    {
+      "raw_name": "Blueberries 6 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 2.83,
+      "line_total": 2.83
+    },
+    {
+      "raw_name": "Strawberries 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.87,
+      "line_total": 2.87
+    },
+    {
+      "raw_name": "Onions yellow",
+      "quantity": 2.43,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.93,
+      "line_total": 2.26
+    },
+    {
+      "raw_name": "Carrots 2 lb",
+      "quantity": 1,
+      "unit": "each",
+      "size": "2 lb",
+      "unit_price": 1.7,
+      "line_total": 1.7
+    },
+    {
+      "raw_name": "Hummus classic 10 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "10 oz",
+      "unit_price": 2.63,
+      "line_total": 5.26
+    },
+    {
+      "raw_name": "Jasmine rice 32 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 2.62,
+      "line_total": 2.62
+    }
+  ],
+  "total": 37.36
+}

@@ -1,0 +1,103 @@
+{
+  "store": "Lidl",
+  "date": "2026-07-07",
+  "line_items": [
+    {
+      "raw_name": "Apples Gala",
+      "quantity": 2.99,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.55,
+      "line_total": 4.63
+    },
+    {
+      "raw_name": "Atlantic salmon fillet",
+      "quantity": 2.72,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 10.05,
+      "line_total": 27.34
+    },
+    {
+      "raw_name": "Tortilla chips 13 oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 1.82,
+      "line_total": 5.46
+    },
+    {
+      "raw_name": "Peanut butter creamy 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.71,
+      "line_total": 1.71
+    },
+    {
+      "raw_name": "Hummus classic 10 oz",
+      "quantity": 2,
+      "unit": "each",
+      "size": "10 oz",
+      "unit_price": 2.55,
+      "line_total": 5.1
+    },
+    {
+      "raw_name": "Orange juice 52 fl oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "52 fl oz",
+      "unit_price": 3.94,
+      "line_total": 11.82
+    },
+    {
+      "raw_name": "Large eggs grade A 18 ct",
+      "quantity": 1,
+      "unit": "each",
+      "size": "18 ct",
+      "unit_price": 3.67,
+      "line_total": 3.67
+    },
+    {
+      "raw_name": "Strawberries 16 oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.74,
+      "line_total": 8.22
+    },
+    {
+      "raw_name": "Tomatoes Roma",
+      "quantity": 3.22,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.34,
+      "line_total": 4.31
+    },
+    {
+      "raw_name": "Bananas, organic",
+      "quantity": 2.08,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.68,
+      "line_total": 1.41
+    },
+    {
+      "raw_name": "Spaghetti 16 oz",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.18,
+      "line_total": 1.18
+    },
+    {
+      "raw_name": "Extra virgin olive oil 16.9 fl oz",
+      "quantity": 3,
+      "unit": "each",
+      "size": "16.9 fl oz",
+      "unit_price": 7.24,
+      "line_total": 21.72
+    }
+  ],
+  "total": 96.57
+}

@@ -1,0 +1,135 @@
+{
+  "store": "Aldi",
+  "date": "2026-08-01",
+  "line_items": [
+    {
+      "raw_name": "GRND COFFEE 24OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "24 oz",
+      "unit_price": 9.74,
+      "line_total": 9.74
+    },
+    {
+      "raw_name": "GRK YGRT PLN 32OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 4.54,
+      "line_total": 9.08
+    },
+    {
+      "raw_name": "CRMY PB 16OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.0,
+      "line_total": 6.0
+    },
+    {
+      "raw_name": "WHL MILK 1GAL",
+      "quantity": 1,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.21,
+      "line_total": 3.21
+    },
+    {
+      "raw_name": "CLSC HUMMUS 10OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "10 oz",
+      "unit_price": 2.21,
+      "line_total": 2.21
+    },
+    {
+      "raw_name": "FRZ BROCCOLI 12OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 1.2,
+      "line_total": 2.4
+    },
+    {
+      "raw_name": "ROMA TOMS",
+      "quantity": 0.88,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.34,
+      "line_total": 1.18
+    },
+    {
+      "raw_name": "ORG BANANAS",
+      "quantity": 3.43,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.79,
+      "line_total": 2.71
+    },
+    {
+      "raw_name": "2% MILK 1GAL",
+      "quantity": 1,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.1,
+      "line_total": 3.1
+    },
+    {
+      "raw_name": "STRAWBERRIES 16OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.87,
+      "line_total": 5.74
+    },
+    {
+      "raw_name": "JASMINE RICE 32OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 3.12,
+      "line_total": 3.12
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 1.5,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 7.14,
+      "line_total": 10.71
+    },
+    {
+      "raw_name": "ALMD MLK UNSWT 64FLOZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "64 fl oz",
+      "unit_price": 2.5,
+      "line_total": 2.5
+    },
+    {
+      "raw_name": "TORT CHIPS 13OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 1.94,
+      "line_total": 3.88
+    },
+    {
+      "raw_name": "LG EGGS 12CT",
+      "quantity": 3,
+      "unit": "each",
+      "size": "12 ct",
+      "unit_price": 2.78,
+      "line_total": 8.34
+    },
+    {
+      "raw_name": "ORG BBY SPINACH 5OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "5 oz",
+      "unit_price": 2.92,
+      "line_total": 2.92
+    }
+  ],
+  "total": 76.84
+}

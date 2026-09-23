@@ -1,0 +1,111 @@
+{
+  "store": "Aldi",
+  "date": "2026-07-04",
+  "line_items": [
+    {
+      "raw_name": "GRND BF 85/15 16OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 4.37,
+      "line_total": 8.74
+    },
+    {
+      "raw_name": "BTR UNSLTD 16OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 4.58,
+      "line_total": 9.16
+    },
+    {
+      "raw_name": "BLUEBERRIES 6OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 2.63,
+      "line_total": 7.89
+    },
+    {
+      "raw_name": "JASMINE RICE 32OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 3.17,
+      "line_total": 6.34
+    },
+    {
+      "raw_name": "OJ NFC 52FLOZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "52 fl oz",
+      "unit_price": 3.72,
+      "line_total": 3.72
+    },
+    {
+      "raw_name": "GRND COFFEE 24OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "24 oz",
+      "unit_price": 8.99,
+      "line_total": 26.97
+    },
+    {
+      "raw_name": "GRK YGRT PLN 32OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 4.35,
+      "line_total": 8.7
+    },
+    {
+      "raw_name": "OLD FASHIONED OATS 42OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "42 oz",
+      "unit_price": 3.54,
+      "line_total": 10.62
+    },
+    {
+      "raw_name": "CRMY PB 16OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.39,
+      "line_total": 2.39
+    },
+    {
+      "raw_name": "ORG BBY SPINACH 5OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "5 oz",
+      "unit_price": 2.44,
+      "line_total": 4.88
+    },
+    {
+      "raw_name": "WW BREAD 20OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 3.06,
+      "line_total": 6.12
+    },
+    {
+      "raw_name": "BANANAS",
+      "quantity": 2.57,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.59,
+      "line_total": 1.52
+    },
+    {
+      "raw_name": "WHL MILK 1GAL",
+      "quantity": 1,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.26,
+      "line_total": 3.26
+    }
+  ],
+  "total": 100.31
+}

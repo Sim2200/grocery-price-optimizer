@@ -1,0 +1,111 @@
+{
+  "store": "Giant",
+  "date": "2026-08-30",
+  "line_items": [
+    {
+      "raw_name": "GNT WHL MILK 1 GAL",
+      "quantity": 2,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.83,
+      "line_total": 7.66
+    },
+    {
+      "raw_name": "GNT EVOO 16.9 FL OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16.9 fl oz",
+      "unit_price": 8.97,
+      "line_total": 8.87
+    },
+    {
+      "raw_name": "GNT 2% MILK 1 GAL",
+      "quantity": 2,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 2.9,
+      "line_total": 5.8
+    },
+    {
+      "raw_name": "GNT FRZ BROCCOLI 12 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 1.65,
+      "line_total": 3.3
+    },
+    {
+      "raw_name": "YLW ONIONS",
+      "quantity": 2.17,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.12,
+      "line_total": 2.43
+    },
+    {
+      "raw_name": "GNT GRND BF 85/15 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 5.73,
+      "line_total": 5.73
+    },
+    {
+      "raw_name": "GNT CRMY PB 16 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.03,
+      "line_total": 6.09
+    },
+    {
+      "raw_name": "GNT GRK YGRT PLN 32 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 7.65,
+      "line_total": 22.95
+    },
+    {
+      "raw_name": "GNT BLUEBERRIES 6 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 3.1,
+      "line_total": 6.2
+    },
+    {
+      "raw_name": "ORG BANANAS",
+      "quantity": 2.8,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.0,
+      "line_total": 2.8
+    },
+    {
+      "raw_name": "GNT ALMD MLK UNSWT 64 FL 0Z",
+      "quantity": 1,
+      "unit": "each",
+      "size": "64 fl oz",
+      "unit_price": 3.29,
+      "line_total": 3.29
+    },
+    {
+      "raw_name": "GALA APPLES",
+      "quantity": 1.13,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 2.06,
+      "line_total": 2.33
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 3.3,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.66,
+      "line_total": 38.48
+    }
+  ],
+  "total": 115.93
+}

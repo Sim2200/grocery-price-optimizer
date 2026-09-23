@@ -1,0 +1,95 @@
+{
+  "store": "Trader Joe's",
+  "date": "2026-08-08",
+  "line_items": [
+    {
+      "raw_name": "TORT CHIPS 13 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 2.08,
+      "line_total": 6.24
+    },
+    {
+      "raw_name": "WHL MILK 1 GAL",
+      "quantity": 1,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.1,
+      "line_total": 3.1
+    },
+    {
+      "raw_name": "CARROTS 2 LB",
+      "quantity": 3,
+      "unit": "each",
+      "size": "2 lb",
+      "unit_price": 1.57,
+      "line_total": 4.71
+    },
+    {
+      "raw_name": "SHRP CHDR 8 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "8 oz",
+      "unit_price": 3.1,
+      "line_total": 6.2
+    },
+    {
+      "raw_name": "TJ WW BREAD 20 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 2.89,
+      "line_total": 5.78
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 2.89,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.79,
+      "line_total": 34.07
+    },
+    {
+      "raw_name": "TJ YLW ONIONS",
+      "quantity": 1.66,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.75,
+      "line_total": 1.24
+    },
+    {
+      "raw_name": "TJ GALA APPLES",
+      "quantity": 2.83,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 1.71,
+      "line_total": 4.84
+    },
+    {
+      "raw_name": "TJ OLD FASHIONED OATS 42 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "42 oz",
+      "unit_price": 3.83,
+      "line_total": 3.83
+    },
+    {
+      "raw_name": "JASMINE RICE 32 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 2.79,
+      "line_total": 2.79
+    },
+    {
+      "raw_name": "TJ OJ NFC 52 FL OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "52 fl oz",
+      "unit_price": 3.61,
+      "line_total": 3.61
+    }
+  ],
+  "total": 76.41
+}

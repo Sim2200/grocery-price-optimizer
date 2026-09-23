@@ -1,0 +1,111 @@
+{
+  "store": "Trader Joe's",
+  "date": "2026-09-05",
+  "line_items": [
+    {
+      "raw_name": "TJ CRMY PB 16 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 2.79,
+      "line_total": 5.58
+    },
+    {
+      "raw_name": "TJ WW BREAD 20 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "20 oz",
+      "unit_price": 2.94,
+      "line_total": 8.82
+    },
+    {
+      "raw_name": "BLK BEANS 15 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "15 oz",
+      "unit_price": 0.93,
+      "line_total": 0.93
+    },
+    {
+      "raw_name": "LG EGGS 12 CT",
+      "quantity": 1,
+      "unit": "each",
+      "size": "12 ct",
+      "unit_price": 3.57,
+      "line_total": 3.57
+    },
+    {
+      "raw_name": "TJ BLUEBERRIES 6 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 2.34,
+      "line_total": 4.68
+    },
+    {
+      "raw_name": "TJ ORG BANANAS",
+      "quantity": 2.18,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.6,
+      "line_total": 1.31
+    },
+    {
+      "raw_name": "TJ OLD FASHIONED OATS 42 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "42 oz",
+      "unit_price": 4.38,
+      "line_total": 4.38
+    },
+    {
+      "raw_name": "TJ YLW ONIONS",
+      "quantity": 2.47,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.77,
+      "line_total": 1.9
+    },
+    {
+      "raw_name": "BANANAS",
+      "quantity": 1.49,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.6,
+      "line_total": 0.89
+    },
+    {
+      "raw_name": "BTR UNSLTD 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 4.69,
+      "line_total": 4.69
+    },
+    {
+      "raw_name": "TJ 2% MILK 1 GAL",
+      "quantity": 2,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 3.78,
+      "line_total": 7.56
+    },
+    {
+      "raw_name": "ATL SALMON FLT",
+      "quantity": 2.95,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 11.28,
+      "line_total": 33.28
+    },
+    {
+      "raw_name": "TJ CARROTS 2 LB",
+      "quantity": 2,
+      "unit": "each",
+      "size": "2 lb",
+      "unit_price": 1.63,
+      "line_total": 3.26
+    }
+  ],
+  "total": 80.85
+}

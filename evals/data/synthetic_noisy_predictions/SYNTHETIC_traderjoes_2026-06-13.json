@@ -1,0 +1,135 @@
+{
+  "store": "Trader Joe's",
+  "date": "2026-06-13",
+  "line_items": [
+    {
+      "raw_name": "BLUEBERRIES 6 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "6 oz",
+      "unit_price": 2.38,
+      "line_total": 2.38
+    },
+    {
+      "raw_name": "TJ LG EGGS 12 CT",
+      "quantity": 2,
+      "unit": "each",
+      "size": "12 ct",
+      "unit_price": 3.57,
+      "line_total": 7.14
+    },
+    {
+      "raw_name": "TJ CARROTS 2 LB",
+      "quantity": 2,
+      "unit": "each",
+      "size": "2 lb",
+      "unit_price": 1.62,
+      "line_total": 3.24
+    },
+    {
+      "raw_name": "TJ JASMINE RICE 32 0Z",
+      "quantity": 1,
+      "unit": "each",
+      "size": "32 oz",
+      "unit_price": 2.83,
+      "line_total": 2.83
+    },
+    {
+      "raw_name": "TORT CHIPS 13 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "13 oz",
+      "unit_price": 2.01,
+      "line_total": 6.03
+    },
+    {
+      "raw_name": "TJ GRND COFFEE 12 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "12 oz",
+      "unit_price": 7.24,
+      "line_total": 14.48
+    },
+    {
+      "raw_name": "BANANAS",
+      "quantity": 3.38,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.6,
+      "line_total": 2.03
+    },
+    {
+      "raw_name": "CLSC HUMMUS 10 OZ",
+      "quantity": 3,
+      "unit": "each",
+      "size": "10 oz",
+      "unit_price": 2.45,
+      "line_total": 7.35
+    },
+    {
+      "raw_name": "TJ BLK BEANS 15 OZ",
+      "quantity": 2,
+      "unit": "each",
+      "size": "15 oz",
+      "unit_price": 0.93,
+      "line_total": 1.86
+    },
+    {
+      "raw_name": "TJ YLW ONIONS",
+      "quantity": 2.23,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.94,
+      "line_total": 1.87
+    },
+    {
+      "raw_name": "TJ HASS AVOCADO",
+      "quantity": 1,
+      "unit": "each",
+      "size": null,
+      "unit_price": 1.43,
+      "line_total": 1.43
+    },
+    {
+      "raw_name": "ORG BANANAS",
+      "quantity": 3.03,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 0.73,
+      "line_total": 2.21
+    },
+    {
+      "raw_name": "TJ ATL SALMON FLT",
+      "quantity": 3.22,
+      "unit": "lb",
+      "size": null,
+      "unit_price": 12.39,
+      "line_total": 39.9
+    },
+    {
+      "raw_name": "WHL MILK 1 GAL",
+      "quantity": 2,
+      "unit": "each",
+      "size": "1 gal",
+      "unit_price": 2.99,
+      "line_total": 5.98
+    },
+    {
+      "raw_name": "SPAGHETTI 16 OZ",
+      "quantity": 1,
+      "unit": "each",
+      "size": "16 oz",
+      "unit_price": 1.35,
+      "line_total": 1.35
+    },
+    {
+      "raw_name": "BAG FEE",
+      "quantity": 1,
+      "unit": "each",
+      "size": null,
+      "unit_price": 0.1,
+      "line_total": 0.1
+    }
+  ],
+  "total": 100.08
+}
