@@ -7,7 +7,7 @@ One row per line item. Rows with the same (store, date) form one receipt.
     Aldi,2026-07-02,WHOLE MILK,1,each,1 gal,3.29,3.29,4.95
 
 `size` and `total` may be blank; `total` is taken from the first non-blank
-row of each receipt. The Streamlit form produces the same rows.
+row of each receipt. The web UI sends CSV text to the same parser.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Central configuration: file paths, model id and tunable defaults.
 
 Everything can be overridden with environment variables so the same code
-runs in tests, the CLI and the Streamlit app.
+runs in tests, the CLI and the API.
 """
 
 from __future__ import annotations
