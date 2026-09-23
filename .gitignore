@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# Local databases and personal data never get committed.
+*.db
+*.sqlite
+data/my_receipts/
+evals/results/
+.env
+.DS_Store

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grocery-optimizer"
+version = "0.1.0"
+description = "Turn grocery receipts into a per-store price database and plan the cheapest shopping trip."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Simran Kharbanda" }]
+dependencies = [
+    "anthropic>=1.0",
+    "pydantic>=2.6",
+    "rapidfuzz>=3.6",
+    "pulp>=2.8",
+    "pandas>=2.1",
+    "pillow>=10.1",
+    "streamlit>=1.35",
+    "altair>=5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+grocery = "grocery_optimizer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+grocery_optimizer = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
