@@ -123,7 +123,11 @@ export default function ReceiptsPage({ version, onChanged }: Props) {
                     <td>{it.size ?? "-"}</td>
                     <td>{money(it.line_total)}</td>
                     <td>
-                      <select value={it.product ?? ""} onChange={(e) => rematch(it, e.target.value)}>
+                      <select
+                        aria-label={`Product for ${it.raw_name}`}
+                        value={it.product ?? ""}
+                        onChange={(e) => rematch(it, e.target.value)}
+                      >
                         <option value="">(not a tracked product)</option>
                         {products.map((p) => (
                           <option key={p.name}>{p.name}</option>

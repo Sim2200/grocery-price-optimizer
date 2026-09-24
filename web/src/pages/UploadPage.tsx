@@ -98,6 +98,17 @@ export default function UploadPage({ onSaved, demoMode }: Props) {
             if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
           }}
           onClick={() => fileInput.current?.click()}
+          // Keyboard users can open the file picker with Enter or Space.
+          role="button"
+          tabIndex={0}
+          aria-label="Choose receipt photos or PDFs to upload"
+          aria-busy={busy}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              fileInput.current?.click();
+            }
+          }}
         >
           {busy ? (
             <p>Extracting... (a real receipt takes a few seconds)</p>
@@ -132,6 +143,7 @@ export default function UploadPage({ onSaved, demoMode }: Props) {
           </p>
           <textarea
             rows={5}
+            aria-label="Receipt items as CSV"
             value={csv}
             placeholder={CSV_EXAMPLE}
             onChange={(e) => setCsv(e.target.value)}

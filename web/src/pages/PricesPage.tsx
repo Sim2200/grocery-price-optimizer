@@ -103,11 +103,17 @@ export default function PricesPage({
           <h2>Price comparison</h2>
           <div className="row gap">
             <input
+              type="search"
+              aria-label="Filter products or categories"
               placeholder="Filter products or categories"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
-            <select value={method} onChange={(e) => setMethod(e.target.value as PriceMethod)}>
+            <select
+              aria-label="Price method"
+              value={method}
+              onChange={(e) => setMethod(e.target.value as PriceMethod)}
+            >
               <option value="weighted">Recency-weighted price</option>
               <option value="latest">Latest price</option>
             </select>
@@ -115,7 +121,7 @@ export default function PricesPage({
         </div>
         <p className="muted small">
           Prices are per comparable unit, so a 12-count and an 18-count carton of eggs compare
-          fairly. Cheapest store is highlighted. Click a row for charts.
+          fairly. Cheapest store is highlighted. Select a row (click, or Tab then Enter) for charts.
         </p>
         <div className="table-wrap">
           <table>
@@ -135,6 +141,15 @@ export default function PricesPage({
                   key={r.product}
                   className={`clickable ${selected === r.product ? "row-selected" : ""}`}
                   onClick={() => setSelected(r.product)}
+                  // Rows are focusable and open the charts with Enter/Space too.
+                  tabIndex={0}
+                  aria-selected={selected === r.product}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(r.product);
+                    }
+                  }}
                 >
                   <td>
                     {r.product} <span className="muted small">{r.category}</span>

@@ -153,6 +153,7 @@ export default function DraftEditor(props: Props) {
                 <tr key={i} className={line.product ? "" : "row-unmatched"}>
                   <td>
                     <input
+                      aria-label={`Line ${i + 1} printed name`}
                       value={line.item.raw_name}
                       onChange={(e) => updateItem(i, { raw_name: e.target.value })}
                     />
@@ -162,12 +163,14 @@ export default function DraftEditor(props: Props) {
                       className="num"
                       type="number"
                       step="0.01"
+                      aria-label={`Line ${i + 1} quantity`}
                       value={line.item.quantity}
                       onChange={(e) => updateItem(i, { quantity: Number(e.target.value) })}
                     />
                   </td>
                   <td>
                     <select
+                      aria-label={`Line ${i + 1} unit`}
                       value={line.item.unit}
                       onChange={(e) => updateItem(i, { unit: e.target.value as ReceiptUnit })}
                     >
@@ -179,6 +182,7 @@ export default function DraftEditor(props: Props) {
                   <td>
                     <input
                       className="short"
+                      aria-label={`Line ${i + 1} size`}
                       value={line.item.size ?? ""}
                       placeholder="e.g. 16 oz"
                       onChange={(e) => updateItem(i, { size: e.target.value || null })}
@@ -189,6 +193,7 @@ export default function DraftEditor(props: Props) {
                       className="num"
                       type="number"
                       step="0.01"
+                      aria-label={`Line ${i + 1} unit price`}
                       value={line.item.unit_price}
                       onChange={(e) => updateItem(i, { unit_price: Number(e.target.value) })}
                     />
@@ -198,12 +203,17 @@ export default function DraftEditor(props: Props) {
                       className="num"
                       type="number"
                       step="0.01"
+                      aria-label={`Line ${i + 1} line total`}
                       value={line.item.line_total}
                       onChange={(e) => updateItem(i, { line_total: Number(e.target.value) })}
                     />
                   </td>
                   <td>
-                    <select value={line.product ?? ""} onChange={(e) => setProduct(i, e.target.value)}>
+                    <select
+                      aria-label={`Line ${i + 1} product`}
+                      value={line.product ?? ""}
+                      onChange={(e) => setProduct(i, e.target.value)}
+                    >
                       <option value="">(not a tracked product)</option>
                       {suggested.length > 0 && (
                         <optgroup label="Suggestions">
@@ -246,11 +256,13 @@ export default function DraftEditor(props: Props) {
         {showNewProduct && (
           <div className="row gap inline-form">
             <input
+              aria-label="New product name"
               placeholder="product name, e.g. kimchi"
               value={newProduct.name}
               onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
             />
             <select
+              aria-label="New product unit"
               value={newProduct.unit}
               onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
             >

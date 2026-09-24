@@ -8,10 +8,12 @@ function SpendChart({ title, data, color }: { title: string; data: Amount[]; col
       <figcaption>
         <h3>{title}</h3>
       </figcaption>
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={270}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="label" interval={0} tick={{ fontSize: 12 }} />
+          {/* Angled labels so long category names don't overlap. */}
+          <XAxis dataKey="label" interval={0} angle={-35} textAnchor="end" height={60}
+                 tick={{ fontSize: 12 }} />
           <YAxis tickFormatter={(v) => `$${v}`} width={50} />
           <Tooltip formatter={(v) => money(Number(v))} />
           <Bar dataKey="amount" fill={color} />

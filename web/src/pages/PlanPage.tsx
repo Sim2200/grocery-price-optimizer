@@ -119,7 +119,11 @@ export default function PlanPage({ version }: { version: number }) {
         {items.length === 0 && <p className="muted">Add items or use the sample list.</p>}
         {items.map((it, i) => (
           <div key={i} className="row gap list-row">
-            <select value={it.product} onChange={(e) => updateItem(i, { product: e.target.value })}>
+            <select
+              aria-label={`Item ${i + 1} product`}
+              value={it.product}
+              onChange={(e) => updateItem(i, { product: e.target.value })}
+            >
               <option value="">choose a product</option>
               {products.map((p) => (
                 <option key={p.name}>{p.name}</option>
@@ -130,11 +134,17 @@ export default function PlanPage({ version }: { version: number }) {
               type="number"
               min="0"
               step="0.5"
+              inputMode="decimal"
+              aria-label={`Item ${i + 1} quantity`}
               value={it.quantity}
               onChange={(e) => updateItem(i, { quantity: Number(e.target.value) })}
             />
             <span className="muted small unit">{unitOf(it.product).replace("_", " ")}</span>
-            <button className="link" onClick={() => setItems((all) => all.filter((_, j) => j !== i))}>
+            <button
+              className="link"
+              aria-label={`Remove item ${i + 1}${it.product ? ` (${it.product})` : ""}`}
+              onClick={() => setItems((all) => all.filter((_, j) => j !== i))}
+            >
               remove
             </button>
           </div>
@@ -147,8 +157,8 @@ export default function PlanPage({ version }: { version: number }) {
       <section className="card">
         <h2>Options</h2>
         <div className="options">
-          <div>
-            <div className="label">Stores I'm willing to visit</div>
+          <fieldset className="plain-fieldset">
+            <legend className="label">Stores I'm willing to visit</legend>
             {stores.length === 0 && <p className="muted small">No stores yet.</p>}
             {stores.map((s) => (
               <label key={s} className="check">
@@ -156,7 +166,7 @@ export default function PlanPage({ version }: { version: number }) {
                 {s}
               </label>
             ))}
-          </div>
+          </fieldset>
           <label>
             Trip cost per store ($ for time and gas)
             <input

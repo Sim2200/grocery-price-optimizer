@@ -78,19 +78,27 @@ export default function App() {
       </header>
 
       {backendError && (
-        <div className="alert error">
+        <div className="alert error" role="alert">
           Cannot reach the API ({backendError}). Start it with <code>make api</code>.
         </div>
       )}
       {demoMessage && (
-        <div className="alert info" onClick={() => setDemoMessage(null)}>
-          {demoMessage} All sample prices are synthetic, not real store prices.
+        <div className="alert info row gap spread" role="status">
+          <span>{demoMessage} All sample prices are synthetic, not real store prices.</span>
+          <button className="link" onClick={() => setDemoMessage(null)} aria-label="Dismiss message">
+            Dismiss
+          </button>
         </div>
       )}
 
-      <nav className="tabs">
+      <nav className="tabs" aria-label="Sections">
         {TABS.map((t) => (
-          <a key={t.id} href={`#${t.id}`} className={tab === t.id ? "tab active" : "tab"}>
+          <a
+            key={t.id}
+            href={`#${t.id}`}
+            className={tab === t.id ? "tab active" : "tab"}
+            aria-current={tab === t.id ? "page" : undefined}
+          >
             {t.label}
           </a>
         ))}
