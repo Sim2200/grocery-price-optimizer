@@ -5,7 +5,7 @@ UVICORN := .venv/bin/uvicorn --factory grocery_optimizer.api.app:create_app
 .PHONY: setup setup-py setup-web dev api web build serve demo plan test typecheck check \
         eval eval-llm eval-matching benchmark data clean \
         docker-build docker-up docker-down \
-        kind-up kind-deploy helm-lint
+        kind-up kind-deploy helm-lint tf-validate tf-plan
 
 setup: setup-py setup-web  ## install everything (Python venv + frontend packages)
 
@@ -83,6 +83,12 @@ kind-deploy: docker-build  ## load the image into kind and install/upgrade the H
 helm-lint:        ## lint and render the Helm chart
 	helm lint deploy/helm/grocery-optimizer
 	helm template grocery deploy/helm/grocery-optimizer > /dev/null
+
+tf-validate:      ## format-check and validate the Terraform config (no AWS calls)
+	cd deploy/terraform && terraform fmt -check -recursive && terraform init -backend=false && terraform validate
+
+tf-plan:          ## show what Terraform WOULD create (needs AWS credentials). There is no apply target.
+	cd deploy/terraform && terraform init && terraform plan
 
 clean:
 	rm -rf data/grocery.db .pytest_cache web/dist

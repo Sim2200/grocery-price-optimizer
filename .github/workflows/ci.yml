@@ -69,3 +69,30 @@ jobs:
       - name: Container logs
         if: always()
         run: docker logs app || true
+
+  helm:
+    name: Helm chart lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint deploy/helm/grocery-optimizer
+      - name: Render with defaults and with autoscaling on
+        run: |
+          helm template grocery deploy/helm/grocery-optimizer > /dev/null
+          helm template grocery deploy/helm/grocery-optimizer \
+            --set autoscaling.enabled=true --set persistence.enabled=false > /dev/null
+
+  terraform:
+    name: Terraform fmt + validate (no plan, no apply)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform fmt -check -recursive
+      # -backend=false: download providers/modules only; no state, no AWS credentials needed.
+      - run: terraform init -backend=false
+      - run: terraform validate

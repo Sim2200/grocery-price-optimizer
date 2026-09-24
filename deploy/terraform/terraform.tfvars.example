@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars and adjust. terraform.tfvars is git-ignored.
+region      = "us-east-1"
+environment = "dev"

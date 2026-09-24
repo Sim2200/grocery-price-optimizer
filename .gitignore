@@ -13,3 +13,10 @@ data/my_receipts/
 evals/results/
 .env
 .DS_Store
+
+# Terraform: provider downloads, state (may contain secrets) and local variable values.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform.tfvars
