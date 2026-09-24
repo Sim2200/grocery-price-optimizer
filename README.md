@@ -1,15 +1,15 @@
 # Grocery Price Optimizer
 
-**Turn grocery receipts into a per-store price database, then find the cheapest way to buy a
-shopping list across stores, counting the cost of each extra trip.**
+**Helps a household spend less on groceries: turn receipts into a per-store price database, then
+find the cheapest way to buy a shopping list across stores, counting the cost of each extra trip.**
 
 By **Simran Kharbanda**
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-TypeScript-61DAFB?logo=react&logoColor=black)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-123_passing-brightgreen)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy_2-SQLite%20%7C%20Postgres-D71F00)
+![Tests](https://img.shields.io/badge/tests-158_passing-brightgreen)
 
 | Upload and review | Price comparison | Trip plan |
 |---|---|---|
@@ -26,9 +26,11 @@ By **Simran Kharbanda**
 |---|---|
 | **Problem** | Prices differ between stores, but receipts are hard to compare: package sizes differ, some items are priced by weight, names are abbreviated, and each extra store costs time and gas. |
 | **Approach** | LLM vision extraction with a JSON schema, then a person reviews the draft, then hybrid product matching (aliases → rules → fuzzy → optional LLM), unit-price normalization, and a mixed-integer program that chooses the stores. |
-| **Stack** | Python · FastAPI · Pydantic · SQLite · PuLP/CBC · rapidfuzz · Anthropic API · React 19 + TypeScript (Vite) · Recharts |
+| **Features** | Receipt upload with review, price comparison and history, trip planning, a watchlist with price-drop alerts, a recipe/list assistant ("tacos for 4"), and spending insights that replay past trips through the planner. |
+| **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 + TypeScript (Vite) · Recharts |
+| **Operations** | Docker (multi-stage), Compose with Prometheus/Grafana/Jaeger, JSON logs with request IDs, Prometheus metrics, OpenTelemetry traces, a Helm chart, plan-only Terraform for AWS, GitHub Actions CI. |
 | **Key results** *(synthetic)* | Over 500 random lists at a $2 trip cost, the plan saves **8.2% vs the best single store** and **5.4% vs per-item greedy**, in about 20 ms per plan. Rules + fuzzy matching auto-matches **106/106** synthetic names and **34/37** hand-written ones, with **0 wrong auto-matches**. |
-| **Quality** | 123 pytest tests (no network needed), a brute-force cross-check of the optimizer, a TypeScript type check, and three eval scripts. |
+| **Quality** | 158 pytest tests (no network needed; LLM calls are mocked), a brute-force cross-check of the optimizer, a TypeScript type check, three eval scripts, and CI on every push. |
 
 ## The problem
 
@@ -73,9 +75,12 @@ flowchart LR
         VAL[Pydantic validation<br/>+ arithmetic warnings]
         M[Product matcher<br/>alias table, rules, rapidfuzz,<br/>optional LLM fallback]
         U[Unit normalization<br/>$/lb, $/oz, $/gal, $/each]
-        DB[(SQLite<br/>stores, products, aliases,<br/>receipts, line items,<br/>price observations)]
+        DB[(SQLAlchemy ORM<br/>SQLite or Postgres<br/>stores, products, aliases,<br/>receipts, line items,<br/>price observations, watchlist)]
         P[Pricing<br/>latest or recency-weighted]
         OPT[Optimizer<br/>MILP with PuLP + CBC<br/>+ single-store & greedy baselines]
+        AL[Watchlist alerts]
+        INS[Spending insights<br/>+ trip replay]
+        LA[List assistant<br/>LLM tool use or offline]
         API --> EX
         EX -->|API key set| CLA
         EX -->|no key| DEMO
@@ -84,9 +89,16 @@ flowchart LR
         M -->|draft for review| API
         API -->|reviewed receipt| U --> DB
         DB --> P --> OPT --> API
+        DB --> AL --> API
+        DB --> INS --> API
+        OPT --> INS
+        API --> LA --> M
     end
 
     CLA -. HTTPS .-> ANT[Anthropic API]
+    LA -. tool calls .-> ANT
+    API -. /metrics .-> PROM[Prometheus + Grafana]
+    API -. OTLP spans .-> JAE[Jaeger / any OTLP collector]
 ```
 
 Uploading happens in two steps on purpose. `POST /api/receipts/extract` returns a **draft** with
@@ -145,8 +157,9 @@ Scores of 85 or higher are accepted automatically. Everything else needs review.
 
 ### 3. Price database · `db.py`, `pricing.py`
 
-The SQLite tables are `stores`, `products`, `aliases`, `receipts`, `line_items` (raw lines) and
-`price_observations` (a comparable $/unit per matched line). Raw lines and observations are
+The tables (SQLAlchemy models in `orm.py`) are `stores`, `products`, `aliases`, `receipts`,
+`line_items` (raw lines), `price_observations` (a comparable $/unit per matched line) and
+`watchlist`. Raw lines and observations are
 kept separate, so re-matching a line only recomputes its observation.
 
 A (product, store) price is either the **latest** observation or a **recency-weighted** mean
@@ -191,7 +204,11 @@ all stores or set per store.
 | GET / POST | `/api/products` | catalog and custom products |
 | GET | `/api/prices`, `/api/prices/history` | product × store table and history |
 | POST | `/api/plan` | optimal plan, both baselines and the savings |
+| GET / PUT / DELETE | `/api/watchlist`, `/api/alerts` | watched products and price-drop alerts |
+| POST | `/api/shopping-list/assist` | recipe or free text → draft shopping list |
+| GET | `/api/insights?trip_cost=` | spend breakdowns and the planner replay |
 | POST | `/api/demo/load` | load the synthetic demo receipts |
+| GET | `/healthz`, `/readyz`, `/metrics` | liveness, readiness (database check), Prometheus metrics |
 
 OpenAPI docs are served at `http://localhost:8000/docs`. The extraction endpoint is a plain
 (sync) function on purpose: FastAPI runs it in a worker thread, so the blocking model call
@@ -206,9 +223,42 @@ types mirror the Pydantic models.
   suggestions, arithmetic warnings and a "new product" form.
 - **Receipts:** saved receipts, with in-place re-matching of any line.
 - **Prices:** a product × store table with the cheapest store highlighted, a latest/weighted
-  toggle, and bar and history charts (lazy-loaded).
-- **Plan my trip:** a list builder, store filters, trip cost and max stores, then per-store buy
-  lists for the optimal plan and both baselines.
+  toggle, bar and history charts (lazy-loaded), and the watchlist.
+- **Plan my trip:** the recipe/list assistant, a list builder, store filters, trip cost and max
+  stores, then per-store buy lists for the optimal plan and both baselines.
+- **Insights:** spend by store, category and month, and the per-trip planner replay.
+- **Phones and accessibility:** a single-column layout with a scrollable tab bar below 640px,
+  labels on every form control, keyboard support for the dropzone and table rows, and visible
+  focus rings.
+
+### 7. Watchlist and price-drop alerts · `alerts.py`
+
+Watch a product with a target price ("milk at $3.00/gal"). An alert fires when the **latest**
+observed price at any store is at or below the target. It uses the latest price rather than the
+recency-weighted one, because an alert is about what something costs right now. The Prices page
+manages the watchlist and draws the target on the price-history chart, and the header shows how
+many watched products have dropped.
+
+### 8. Recipe and list assistant · `list_assistant.py`
+
+Paste a recipe, a dish ("tacos for 4") or a free-text list, and get catalog products with
+quantities in each product's unit, ready to add to the shopping list.
+
+- **With an API key:** a small tool-use loop. The model has one tool, `search_catalog(query)`,
+  which runs the same matcher used for receipts and returns product names, units and scores.
+  The final answer uses a JSON schema whose `product` field is an **enum of catalog names plus
+  `NONE`**, so the model can't invent a product the app has no prices for.
+- **Without a key:** a deterministic assistant knows a few recipes (scaled by servings) and
+  parses one item per line or comma ("2 lb chicken breast, a dozen eggs"), converting units.
+- Either way the result is a draft that you check before it joins the list. Tests drive the tool
+  loop with a scripted fake client.
+
+### 9. Spending insights · `insights.py`
+
+Spend by store, category and month, plus a **"what if you had used the planner?"** replay. Each
+past receipt's matched lines become a shopping list and are re-planned with only the prices known
+on that date. The store actually visited keeps the prices actually paid, so the real trip is
+always one of the optimizer's options and the estimated saving can never be negative.
 
 ## Results
 
@@ -238,6 +288,16 @@ completely.
 | $5 | 5.0% | 24.1% | 13.3% | 1.84 | ~19 ms |
 
 The time includes the MILP and both baselines, measured on a laptop.
+
+### Spending insights: planner replay on the 16 synthetic receipts
+
+| Trip cost | Paid (items + one trip each) | Planned | Estimated savings | Trips that would change |
+|---|---|---|---|---|
+| $0 | $1,314.07 | $1,124.88 | $189.19 (14.4%) | 15 of 16 |
+| $2 | $1,346.07 | $1,202.09 | $143.98 (10.7%) | 13 of 16 |
+| $5 | $1,394.07 | $1,292.84 | $101.23 (7.3%) | 8 of 16 |
+
+Higher trip costs make extra stops pay off less often, so fewer past trips would change.
 
 ### Product matching · `make eval-matching`
 
@@ -281,8 +341,12 @@ synthetic images and needs an API key.
   comes in (LLM, CSV, demo).
 - **Draft → review → save.** One bad price silently skews every future plan, so a person
   confirms each receipt before it counts.
-- **SQLite.** One user, one file, no setup, and real SQL (foreign keys, cascades, upserts). The
-  data layer is a single class, so moving to Postgres would be a contained change.
+- **SQLAlchemy with SQLite by default.** One user, one file, no setup. The ORM models (`orm.py`)
+  sit behind one repository class (`PriceDB`), so `DATABASE_URL` switches to Postgres without
+  touching the rest of the app. Existing SQLite files from before the ORM still open (a test
+  covers this).
+- **Tool use for the list assistant, not free text.** Letting the model search the catalog and
+  answer from an enum keeps its output tied to products that actually have prices.
 - **App factory with dependency injection.** `create_app(db_path, extractor)` lets tests use a
   temporary database and a fake model client, so the whole API is tested without a network.
 
@@ -295,7 +359,9 @@ synthetic images and needs an API key.
 | Flat trip cost | Store locations and real travel time |
 | Small catalog (32 products) | Embedding-based candidate search before the LLM fallback |
 | Extraction accuracy on real, crumpled thermal receipts isn't measured | A hand-labeled real receipt set (see below) |
-| Single-user local app with no auth | Docker Compose, CI, Postgres and user accounts |
+| Single-user app with no auth | User accounts, and schema migrations (Alembic) for Postgres |
+| The list assistant's offline mode knows only three recipes | More recipes, or always use the LLM when a key is set |
+| Redis is provisioned in Terraform but not used yet | Cache the price table and plans |
 
 Other smaller points: store-brand and name-brand products share one canonical product, and
 branches of the same chain share prices.
@@ -316,7 +382,7 @@ Open http://localhost:5173 and click **Load synthetic demo data**.
 | `make serve` | build the React app and serve it from FastAPI at :8000 |
 | `make api` | API only (docs at :8000/docs) |
 | `make demo && make plan` | terminal only: load demo data and print a trip plan |
-| `make test` | 123 Python tests, no network or key needed |
+| `make test` | 158 Python tests, no network or key needed |
 | `make typecheck` / `make build` | TypeScript check / production build |
 | `make eval` · `make eval-matching` · `make benchmark` | the evals behind the results above |
 | `make eval-llm` | real LLM extraction on the synthetic images (needs a key and a model ID) |
@@ -341,6 +407,35 @@ matching fallback, or `GROCERY_DEMO=1` to force demo mode.
 The database is `data/grocery.db` (set `GROCERY_DB` to change it). `data/my_receipts/` and
 `*.db` are in `.gitignore`.
 
+## Production engineering
+
+These pieces support the app. None of them change how it behaves.
+
+```mermaid
+flowchart LR
+    GH[GitHub Actions<br/>pytest · typecheck · build<br/>docker build + smoke test<br/>helm lint · terraform validate] --> IMG[Docker image<br/>React build + FastAPI]
+    IMG --> DC[Docker Compose<br/>app · Prometheus · Grafana · Jaeger]
+    IMG --> K8S[Helm chart<br/>kind / minikube / EKS]
+    TF[Terraform, plan-only<br/>VPC · EKS · RDS Postgres · ElastiCache] -.-> K8S
+    K8S --> RDS[(Postgres via DATABASE_URL)]
+```
+
+| Piece | Where | Run it |
+|---|---|---|
+| **Database** | `orm.py`, `db.py` | SQLite file by default. For Postgres: `pip install -e ".[postgres]"` and set `DATABASE_URL=postgresql+psycopg://user:pass@host:5432/grocery` |
+| **JSON logs** | `observability/log.py` | Every line is JSON with `request_id` (from or echoed as the `X-Request-ID` header) and `trace_id`. `LOG_LEVEL`, `LOG_FORMAT=json\|text` |
+| **Metrics** | `observability/metrics.py` | `GET /metrics`: request count and latency by route template, receipts extracted/saved, line matches by method, list-assistant calls, optimizer solve time |
+| **Traces** | `observability/tracing.py` | Spans around extraction, matching, optimization, insights and the list assistant. Console by default; `OTEL_EXPORTER_OTLP_ENDPOINT=http://host:4318` sends OTLP; `OTEL_TRACES_EXPORTER=none` turns it off (the tests do this) |
+| **Probes** | `api/app.py` | `/healthz` (process is up) for liveness, `/readyz` (database answers) for readiness |
+| **Docker** | `Dockerfile`, `docker-compose.yml` | `make docker-build`, or `docker compose up --build`: app on :8000, Prometheus :9090, Grafana :3000 (provisioned "Grocery Optimizer" dashboard), Jaeger :16686 |
+| **Kubernetes** | `deploy/helm/grocery-optimizer` | `make kind-up && make kind-deploy`, then `kubectl port-forward svc/grocery-grocery-optimizer 8000:80`. Secrets (API key, `DATABASE_URL`) come from a Secret you create (see `values.yaml`) |
+| **AWS** | `deploy/terraform` | `make tf-validate` (no AWS calls) or `make tf-plan` (needs credentials). There is deliberately no apply target, and nothing has been applied |
+| **CI** | `.github/workflows/ci.yml` | Runs on every push and PR |
+
+With the default SQLite volume the chart runs one replica. To scale out or enable the HPA, point
+`DATABASE_URL` at Postgres and set `persistence.enabled=false`. The chart refuses to render
+otherwise.
+
 ## Project layout
 
 ```
@@ -352,19 +447,26 @@ src/grocery_optimizer/
   units.py          size parsing and comparable unit prices
   catalog.py        canonical products (data/catalog.json)
   matching.py       alias table + rules + rapidfuzz matcher
-  db.py             SQLite price database
+  orm.py            SQLAlchemy models (one class per table)
+  db.py             PriceDB repository: SQLite or Postgres via DATABASE_URL
   pricing.py        latest / recency-weighted prices
   optimizer.py      MILP (PuLP/CBC) + single-store and greedy baselines
   planning.py       DB prices + shopping list -> optimizer
+  alerts.py         watchlist price-drop alerts
+  insights.py       spend breakdowns and the planner replay
+  list_assistant.py recipe / free text -> shopping list (LLM tool use or offline)
   ingest.py         extraction -> matching -> DB glue, demo loader
   evaluation.py     extraction metrics (P/R/F1)
   cli.py            command-line interface
   api/              FastAPI app + request/response models
+  observability/    JSON logging, Prometheus metrics, OpenTelemetry tracing
 web/                React + TypeScript frontend (Vite)
 evals/              extraction eval, matching eval, optimizer benchmark
 scripts/            synthetic data generator
 data/synthetic/     SYNTHETIC receipts (JSON + PNG) and match labels
 tests/              pytest suite
+deploy/             Helm chart, Terraform, Prometheus and Grafana config
+Dockerfile          multi-stage build (React, then Python)
 ```
 
 ## Author
