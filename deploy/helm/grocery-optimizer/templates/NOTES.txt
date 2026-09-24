@@ -1,0 +1,5 @@
+Grocery Price Optimizer is deployed as {{ include "grocery-optimizer.fullname" . }}.
+
+Open it locally:
+  kubectl port-forward svc/{{ include "grocery-optimizer.fullname" . }} 8000:{{ .Values.service.port }}
+  then browse http://localhost:8000  (metrics: /metrics, probes: /healthz, /readyz)

@@ -1,0 +1,69 @@
+# Default values. Override with `--set key=value` or `-f my-values.yaml`.
+
+image:
+  repository: grocery-optimizer
+  tag: local                 # built with `make docker-build`, loaded into kind/minikube
+  pullPolicy: IfNotPresent   # use the locally loaded image; don't pull from a registry
+
+# With the default SQLite file, keep 1 replica: each pod would otherwise have its own DB.
+# Point DATABASE_URL at Postgres (see `secret` below) before scaling out or enabling the HPA.
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80                   # the Service port; traffic goes to the container's 8000
+
+# Plain (non-secret) settings, stored in a ConfigMap and exposed as environment variables.
+config:
+  LOG_LEVEL: INFO
+  LOG_FORMAT: json
+  OTEL_TRACES_EXPORTER: none # "console", or set OTEL_EXPORTER_OTLP_ENDPOINT for a collector
+  OTEL_SERVICE_NAME: grocery-optimizer
+  GROCERY_LLM_MODEL: ""      # empty = offline demo mode
+
+# Secret values (ANTHROPIC_API_KEY, DATABASE_URL) come from a Secret you create yourself,
+# so they never live in values files or git:
+#   kubectl create secret generic grocery-optimizer-secrets \
+#     --from-literal=ANTHROPIC_API_KEY=... \
+#     --from-literal=DATABASE_URL=postgresql+psycopg://user:pass@host:5432/grocery
+secret:
+  existingSecret: ""         # name of that Secret; empty = no secret env vars
+
+# SQLite file on a PersistentVolumeClaim (ignored when DATABASE_URL points elsewhere).
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""           # "" = the cluster default (kind and minikube provide one)
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+probes:
+  liveness:                  # restart the container if the process stops answering
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    failureThreshold: 3
+  readiness:                 # stop sending traffic while the database is unreachable
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+
+# Horizontal Pod Autoscaler: off by default (needs Postgres and metrics-server).
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Lets a Prometheus that honours these annotations scrape /metrics.
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: /metrics
+  prometheus.io/port: "8000"

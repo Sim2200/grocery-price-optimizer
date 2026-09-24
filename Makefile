@@ -4,7 +4,8 @@ UVICORN := .venv/bin/uvicorn --factory grocery_optimizer.api.app:create_app
 
 .PHONY: setup setup-py setup-web dev api web build serve demo plan test typecheck check \
         eval eval-llm eval-matching benchmark data clean \
-        docker-build docker-up docker-down
+        docker-build docker-up docker-down \
+        kind-up kind-deploy helm-lint
 
 setup: setup-py setup-web  ## install everything (Python venv + frontend packages)
 
@@ -70,6 +71,18 @@ docker-up:        ## run the stack with Docker Compose (app on :8000)
 
 docker-down:
 	docker compose down
+
+kind-up:          ## create a local Kubernetes cluster with kind (needs Docker)
+	kind create cluster --name grocery
+
+kind-deploy: docker-build  ## load the image into kind and install/upgrade the Helm release
+	kind load docker-image grocery-optimizer:local --name grocery
+	helm upgrade --install grocery deploy/helm/grocery-optimizer --wait
+	@echo "Now: kubectl port-forward svc/grocery-grocery-optimizer 8000:80"
+
+helm-lint:        ## lint and render the Helm chart
+	helm lint deploy/helm/grocery-optimizer
+	helm template grocery deploy/helm/grocery-optimizer > /dev/null
 
 clean:
 	rm -rf data/grocery.db .pytest_cache web/dist

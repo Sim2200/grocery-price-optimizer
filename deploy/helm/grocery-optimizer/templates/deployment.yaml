@@ -1,0 +1,77 @@
+{{- if and .Values.autoscaling.enabled .Values.persistence.enabled }}
+{{- fail "autoscaling needs a shared database: set persistence.enabled=false and provide DATABASE_URL (Postgres) via secret.existingSecret" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "grocery-optimizer.fullname" . }}
+  labels:
+    {{- include "grocery-optimizer.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  {{- if .Values.persistence.enabled }}
+  # A ReadWriteOnce volume can't be mounted by old and new pods at once: replace, don't overlap.
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "grocery-optimizer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "grocery-optimizer.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Changing the ConfigMap changes this hash, which rolls the pods to pick it up.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001     # the "app" user created in the Dockerfile
+        fsGroup: 10001       # makes the mounted volume writable by that user
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ include "grocery-optimizer.fullname" . }}
+            {{- if .Values.secret.existingSecret }}
+            - secretRef:
+                name: {{ .Values.secret.existingSecret }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/var
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "grocery-optimizer.fullname" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
