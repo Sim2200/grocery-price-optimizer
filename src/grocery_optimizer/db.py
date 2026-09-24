@@ -1,13 +1,14 @@
-"""SQLite price database.
+"""Price database (SQLAlchemy 2.0 ORM).
 
-Tables
-------
-stores              one row per store (chain) name
-products            canonical products and the unit their price is compared in
-aliases             raw receipt name -> product (user corrections + confirmed matches)
-receipts            one row per receipt (store, date, printed total, source)
-line_items          every receipt line exactly as extracted, plus its product match
-price_observations  comparable unit price ($/unit of the product) per line item
+`PriceDB` is a small repository class: the rest of the app calls methods like
+`insert_receipt` or `observations()` and never writes SQL itself. The tables
+are defined in `orm.py`.
+
+Which database?
+- a file path such as `data/grocery.db`   -> SQLite file (the default)
+- `:memory:`                              -> throwaway SQLite database (tests)
+- a URL such as `postgresql+psycopg://user:pass@host/db` -> Postgres
+  (set the DATABASE_URL environment variable; see config.py)
 
 Raw line items are kept separately from price observations so a user
 correction (re-matching a line) can simply recompute its observation.
@@ -16,65 +17,28 @@ correction (re-matching a line) can simply recompute its observation.
 from __future__ import annotations
 
 import datetime as dt
-import sqlite3
 from collections.abc import Iterable
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
+
+from sqlalchemy import Engine, case, create_engine, delete, event, func, select
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from .catalog import Product
 from .matching import MatchResult, normalize_alias_key
+from .orm import (
+    AliasRow,
+    Base,
+    LineItemRow,
+    PriceObservationRow,
+    ProductRow,
+    ReceiptRow,
+    StoreRow,
+)
 from .schemas import LineItem, Receipt
 from .units import comparable_unit_price
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS stores (
-    id   INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE
-);
-CREATE TABLE IF NOT EXISTS products (
-    id       INTEGER PRIMARY KEY,
-    name     TEXT NOT NULL UNIQUE,
-    unit     TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT 'other'
-);
-CREATE TABLE IF NOT EXISTS aliases (
-    alias      TEXT PRIMARY KEY,           -- normalize_alias_key(raw_name)
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    source     TEXT NOT NULL,              -- 'user' | 'fuzzy' | 'llm'
-    updated_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS receipts (
-    id            INTEGER PRIMARY KEY,
-    store_id      INTEGER NOT NULL REFERENCES stores(id),
-    purchase_date TEXT,
-    total         REAL,
-    source        TEXT NOT NULL,           -- 'llm' | 'manual' | 'demo'
-    file_name     TEXT,
-    created_at    TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS line_items (
-    id           INTEGER PRIMARY KEY,
-    receipt_id   INTEGER NOT NULL REFERENCES receipts(id) ON DELETE CASCADE,
-    raw_name     TEXT NOT NULL,
-    quantity     REAL NOT NULL,
-    unit         TEXT NOT NULL,
-    size         TEXT,
-    unit_price   REAL NOT NULL,
-    line_total   REAL NOT NULL,
-    product_id   INTEGER REFERENCES products(id),
-    match_method TEXT,
-    match_score  REAL
-);
-CREATE TABLE IF NOT EXISTS price_observations (
-    id            INTEGER PRIMARY KEY,
-    line_item_id  INTEGER NOT NULL UNIQUE REFERENCES line_items(id) ON DELETE CASCADE,
-    product_id    INTEGER NOT NULL REFERENCES products(id),
-    store_id      INTEGER NOT NULL REFERENCES stores(id),
-    observed_date TEXT NOT NULL,
-    unit_price    REAL NOT NULL            -- $ per products.unit
-);
-CREATE INDEX IF NOT EXISTS idx_obs_product_store ON price_observations(product_id, store_id);
-"""
 
 
 @dataclass(frozen=True)
@@ -90,92 +54,146 @@ def _now() -> str:
     return dt.datetime.now().isoformat(timespec="seconds")
 
 
+def database_url(target: str | Path) -> str:
+    """Turn a file path into a SQLite URL; pass real URLs (anything with '://') through."""
+    target = str(target)
+    if "://" in target:
+        return target
+    if target == ":memory:":
+        return "sqlite://"
+    Path(target).parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{target}"
+
+
+def _enable_sqlite_foreign_keys(dbapi_connection, _record) -> None:
+    # SQLite ignores foreign keys (and ON DELETE CASCADE) unless this is set per connection.
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON")
+    cursor.close()
+
+
+def _new_engine(url: str) -> Engine:
+    if url == "sqlite://":
+        # In-memory: every connection must share the one database, so use a single connection.
+        engine = create_engine(url, poolclass=StaticPool,
+                               connect_args={"check_same_thread": False})
+    elif url.startswith("sqlite"):
+        # FastAPI runs sync endpoints in a thread pool, so connections cross threads.
+        engine = create_engine(url, connect_args={"check_same_thread": False})
+    else:
+        # pool_pre_ping drops connections the server closed (e.g. after a Postgres restart).
+        engine = create_engine(url, pool_pre_ping=True)
+    if engine.dialect.name == "sqlite":
+        event.listen(engine, "connect", _enable_sqlite_foreign_keys)
+    Base.metadata.create_all(engine)  # CREATE TABLE IF NOT EXISTS for every model
+    return engine
+
+
+@lru_cache(maxsize=None)
+def _shared_engine(url: str) -> Engine:
+    """One engine (and connection pool) per database URL for the whole process."""
+    return _new_engine(url)
+
+
 class PriceDB:
+    """One `PriceDB` = one SQLAlchemy session. The API opens one per request."""
+
     def __init__(self, path: str | Path = ":memory:") -> None:
+        self.url = database_url(path)
         self.path = str(path)
-        if self.path != ":memory:":
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        # FastAPI runs sync endpoints in a thread pool; the API opens one connection per request.
-        self.conn = sqlite3.connect(self.path, check_same_thread=False)
-        self.conn.row_factory = sqlite3.Row
-        self.conn.execute("PRAGMA foreign_keys = ON")
-        self.conn.executescript(SCHEMA)
+        # A fresh in-memory database per PriceDB (tests rely on this); files and servers share.
+        self._owns_engine = self.url == "sqlite://"
+        self.engine = _new_engine(self.url) if self._owns_engine else _shared_engine(self.url)
+        # expire_on_commit=False: objects stay readable after commit without another query.
+        self.session = Session(self.engine, expire_on_commit=False)
 
     def close(self) -> None:
-        self.conn.close()
+        self.session.close()
+        if self._owns_engine:
+            self.engine.dispose()
 
     def reset_data(self) -> None:
         """Delete all receipts, prices, aliases and stores (products are kept)."""
-        for table in ("price_observations", "line_items", "receipts", "aliases", "stores"):
-            self.conn.execute(f"DELETE FROM {table}")
-        self.conn.commit()
+        for model in (PriceObservationRow, LineItemRow, ReceiptRow, AliasRow, StoreRow):
+            self.session.execute(delete(model))
+        self.session.commit()
 
     # ----- stores & products ---------------------------------------------
+    def _store(self, name: str) -> StoreRow:
+        store = self.session.scalar(select(StoreRow).where(StoreRow.name == name))
+        if store is None:
+            store = StoreRow(name=name)
+            self.session.add(store)
+            self.session.flush()  # assigns store.id without committing
+        return store
+
     def upsert_store(self, name: str) -> int:
-        self.conn.execute("INSERT OR IGNORE INTO stores(name) VALUES (?)", (name,))
-        row = self.conn.execute("SELECT id FROM stores WHERE name = ?", (name,)).fetchone()
-        return int(row["id"])
+        store = self._store(name)
+        self.session.commit()
+        return store.id
 
     def store_names(self) -> list[str]:
-        return [r["name"] for r in self.conn.execute("SELECT name FROM stores ORDER BY name")]
+        return list(self.session.scalars(select(StoreRow.name).order_by(StoreRow.name)))
 
     def add_product(self, product: Product) -> int:
-        self.conn.execute(
-            "INSERT OR IGNORE INTO products(name, unit, category) VALUES (?, ?, ?)",
-            (product.name, product.unit, product.category),
-        )
-        self.conn.commit()
-        return self._product_id(product.name)
+        row = self.session.scalar(select(ProductRow).where(ProductRow.name == product.name))
+        if row is None:
+            row = ProductRow(name=product.name, unit=product.unit, category=product.category)
+            self.session.add(row)
+            self.session.commit()
+        return row.id
 
     def sync_catalog(self, catalog: Iterable[Product]) -> None:
+        existing = set(self.session.scalars(select(ProductRow.name)))
         for product in catalog:
-            self.add_product(product)
+            if product.name not in existing:
+                self.session.add(ProductRow(name=product.name, unit=product.unit,
+                                            category=product.category))
+        self.session.commit()
 
     def products(self) -> list[Product]:
-        rows = self.conn.execute("SELECT name, unit, category FROM products ORDER BY name")
-        return [Product(r["name"], r["unit"], r["category"]) for r in rows]
+        rows = self.session.scalars(select(ProductRow).order_by(ProductRow.name))
+        return [Product(r.name, r.unit, r.category) for r in rows]
 
-    def _product_id(self, name: str) -> int:
-        row = self.conn.execute("SELECT id FROM products WHERE name = ?", (name,)).fetchone()
+    def _product(self, name: str) -> ProductRow:
+        row = self.session.scalar(select(ProductRow).where(ProductRow.name == name))
         if row is None:
             raise KeyError(f"Unknown product: {name}")
-        return int(row["id"])
+        return row
 
-    def _product_unit(self, product_id: int) -> str:
-        row = self.conn.execute("SELECT unit FROM products WHERE id = ?", (product_id,)).fetchone()
-        return str(row["unit"])
+    def _product_id(self, name: str) -> int:
+        return self._product(name).id
 
     # ----- aliases -----------------------------------------------------------
     def set_alias(self, raw_name: str, product_name: str, source: str = "user") -> None:
         """Remember raw_name -> product. A 'user' alias is never overwritten by automation."""
         key = normalize_alias_key(raw_name)
-        existing = self.conn.execute("SELECT source FROM aliases WHERE alias = ?", (key,)).fetchone()
-        if existing is not None and existing["source"] == "user" and source != "user":
+        product_id = self._product_id(product_name)
+        row = self.session.get(AliasRow, key)
+        if row is None:
+            self.session.add(AliasRow(alias=key, product_id=product_id, source=source,
+                                      updated_at=_now()))
+        elif row.source == "user" and source != "user":
             return
-        self.conn.execute(
-            "INSERT INTO aliases(alias, product_id, source, updated_at) VALUES (?, ?, ?, ?) "
-            "ON CONFLICT(alias) DO UPDATE SET product_id = excluded.product_id, "
-            "source = excluded.source, updated_at = excluded.updated_at",
-            (key, self._product_id(product_name), source, _now()),
-        )
-        self.conn.commit()
+        else:
+            row.product_id, row.source, row.updated_at = product_id, source, _now()
+        self.session.commit()
+
+    def _alias_query(self):
+        return (select(AliasRow.alias, ProductRow.name.label("product"), AliasRow.source,
+                       AliasRow.updated_at)
+                .join(ProductRow, ProductRow.id == AliasRow.product_id)
+                .order_by(AliasRow.alias))
 
     def aliases(self) -> dict[str, str]:
-        rows = self.conn.execute(
-            "SELECT a.alias, p.name FROM aliases a JOIN products p ON p.id = a.product_id"
-        )
-        return {r["alias"]: r["name"] for r in rows}
+        return {r.alias: r.product for r in self.session.execute(self._alias_query())}
 
     def alias_rows(self) -> list[dict]:
-        rows = self.conn.execute(
-            "SELECT a.alias, p.name AS product, a.source, a.updated_at "
-            "FROM aliases a JOIN products p ON p.id = a.product_id ORDER BY a.alias"
-        )
-        return [dict(r) for r in rows]
+        return [dict(r._mapping) for r in self.session.execute(self._alias_query())]
 
     def delete_alias(self, alias: str) -> None:
-        self.conn.execute("DELETE FROM aliases WHERE alias = ?", (alias,))
-        self.conn.commit()
+        self.session.execute(delete(AliasRow).where(AliasRow.alias == alias))
+        self.session.commit()
 
     # ----- receipts ----------------------------------------------------------
     def insert_receipt(
@@ -188,110 +206,113 @@ class PriceDB:
         """Store a receipt, its line items and a price observation per matched line."""
         if len(matches) != len(receipt.line_items):
             raise ValueError("Need exactly one match result per line item")
-        store_id = self.upsert_store(receipt.store)
-        purchase_date = (receipt.date or dt.date.today()).isoformat()
-        cur = self.conn.execute(
-            "INSERT INTO receipts(store_id, purchase_date, total, source, file_name, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (store_id, purchase_date, receipt.total, source, file_name, _now()),
+        row = ReceiptRow(
+            store=self._store(receipt.store),
+            purchase_date=receipt.date or dt.date.today(),
+            total=receipt.total, source=source, file_name=file_name, created_at=_now(),
         )
-        receipt_id = int(cur.lastrowid)
         for item, match in zip(receipt.line_items, matches, strict=True):
-            product_id = self._product_id(match.product) if match.product else None
-            cur = self.conn.execute(
-                "INSERT INTO line_items(receipt_id, raw_name, quantity, unit, size, unit_price, "
-                "line_total, product_id, match_method, match_score) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (receipt_id, item.raw_name, item.quantity, item.unit, item.size, item.unit_price,
-                 item.line_total, product_id, match.method, match.score),
+            line = LineItemRow(
+                raw_name=item.raw_name, quantity=item.quantity, unit=item.unit, size=item.size,
+                unit_price=item.unit_price, line_total=item.line_total,
+                product=self._product(match.product) if match.product else None,
+                match_method=match.method, match_score=match.score,
             )
-            self._write_observation(int(cur.lastrowid))
-        self.conn.commit()
-        return receipt_id
+            line.observation = self._observation_for(line, row)
+            row.line_items.append(line)
+        self.session.add(row)
+        self.session.commit()
+        return row.id
 
-    def _write_observation(self, line_item_id: int) -> None:
-        """(Re)compute the comparable price observation for one line item."""
-        self.conn.execute("DELETE FROM price_observations WHERE line_item_id = ?", (line_item_id,))
-        row = self.conn.execute(
-            "SELECT li.*, r.store_id, r.purchase_date FROM line_items li "
-            "JOIN receipts r ON r.id = li.receipt_id WHERE li.id = ?",
-            (line_item_id,),
-        ).fetchone()
-        if row is None or row["product_id"] is None:
-            return
-        item = LineItem(
-            raw_name=row["raw_name"], quantity=row["quantity"], unit=row["unit"],
-            size=row["size"], unit_price=row["unit_price"], line_total=row["line_total"],
-        )
-        price = comparable_unit_price(item, self._product_unit(row["product_id"]))
+    def _observation_for(self, line: LineItemRow, receipt: ReceiptRow) -> PriceObservationRow | None:
+        """The comparable price observation for one line, or None if it can't be compared."""
+        if line.product is None:
+            return None
+        item = LineItem(raw_name=line.raw_name, quantity=line.quantity, unit=line.unit,
+                        size=line.size, unit_price=line.unit_price, line_total=line.line_total)
+        price = comparable_unit_price(item, line.product.unit)
         if price is None:
-            return  # e.g. sold per each with no size, but the product is priced per lb
-        self.conn.execute(
-            "INSERT INTO price_observations(line_item_id, product_id, store_id, observed_date, "
-            "unit_price) VALUES (?, ?, ?, ?, ?)",
-            (line_item_id, row["product_id"], row["store_id"], row["purchase_date"], price),
-        )
+            return None  # e.g. sold per each with no size, but the product is priced per lb
+        return PriceObservationRow(product=line.product, store=receipt.store,
+                                   observed_date=receipt.purchase_date or dt.date.today(),
+                                   unit_price=price)
 
     def rematch_line_item(self, line_item_id: int, product_name: str | None,
                           remember: bool = True) -> None:
         """User correction: point a line at another product (or none) and
         optionally save the raw name as a 'user' alias."""
-        product_id = self._product_id(product_name) if product_name else None
-        self.conn.execute(
-            "UPDATE line_items SET product_id = ?, match_method = 'user', match_score = 100 "
-            "WHERE id = ?",
-            (product_id, line_item_id),
-        )
-        self._write_observation(line_item_id)
+        product = self._product(product_name) if product_name else None
+        line = self.session.get(LineItemRow, line_item_id)
+        if line is None:
+            return
+        line.product, line.match_method, line.match_score = product, "user", 100.0
+        if line.observation is not None:
+            line.observation = None
+            self.session.flush()  # delete-orphan cascade: the old observation row is deleted
+        line.observation = self._observation_for(line, line.receipt)
+        self.session.commit()
         if remember and product_name:
-            raw = self.conn.execute(
-                "SELECT raw_name FROM line_items WHERE id = ?", (line_item_id,)
-            ).fetchone()["raw_name"]
-            self.set_alias(raw, product_name, source="user")
-        self.conn.commit()
+            self.set_alias(line.raw_name, product_name, source="user")
 
     def delete_receipt(self, receipt_id: int) -> None:
-        self.conn.execute("DELETE FROM receipts WHERE id = ?", (receipt_id,))
-        self.conn.commit()
+        row = self.session.get(ReceiptRow, receipt_id)
+        if row is not None:
+            self.session.delete(row)  # cascades to line items and observations
+            self.session.commit()
 
     def receipts(self) -> list[dict]:
-        rows = self.conn.execute(
-            "SELECT r.id, s.name AS store, r.purchase_date, r.total, r.source, r.file_name, "
-            "COUNT(li.id) AS n_items, "
-            "SUM(CASE WHEN li.product_id IS NULL THEN 1 ELSE 0 END) AS n_unmatched "
-            "FROM receipts r JOIN stores s ON s.id = r.store_id "
-            "LEFT JOIN line_items li ON li.receipt_id = r.id "
-            "GROUP BY r.id ORDER BY r.purchase_date DESC, r.id DESC"
+        n_unmatched = func.coalesce(
+            func.sum(case((LineItemRow.id.is_not(None) & LineItemRow.product_id.is_(None), 1),
+                          else_=0)), 0)
+        query = (
+            select(ReceiptRow, StoreRow.name.label("store"),
+                   func.count(LineItemRow.id).label("n_items"), n_unmatched.label("n_unmatched"))
+            .join(StoreRow, StoreRow.id == ReceiptRow.store_id)
+            .outerjoin(LineItemRow, LineItemRow.receipt_id == ReceiptRow.id)
+            .group_by(ReceiptRow.id, StoreRow.name)
+            .order_by(ReceiptRow.purchase_date.desc(), ReceiptRow.id.desc())
         )
-        return [dict(r) for r in rows]
+        return [
+            {"id": r.id, "store": store,
+             "purchase_date": r.purchase_date.isoformat() if r.purchase_date else None,
+             "total": r.total, "source": r.source, "file_name": r.file_name,
+             "n_items": int(n_items), "n_unmatched": int(unmatched)}
+            for r, store, n_items, unmatched in self.session.execute(query)
+        ]
 
     def line_items(self, receipt_id: int | None = None, only_unmatched: bool = False) -> list[dict]:
-        sql = (
-            "SELECT li.id, li.receipt_id, s.name AS store, r.purchase_date, li.raw_name, "
-            "li.quantity, li.unit, li.size, li.unit_price, li.line_total, p.name AS product, "
-            "li.match_method, li.match_score, po.unit_price AS comparable_price, p.unit AS product_unit "
-            "FROM line_items li JOIN receipts r ON r.id = li.receipt_id "
-            "JOIN stores s ON s.id = r.store_id "
-            "LEFT JOIN products p ON p.id = li.product_id "
-            "LEFT JOIN price_observations po ON po.line_item_id = li.id WHERE 1=1"
+        query = (
+            select(LineItemRow, ReceiptRow.purchase_date, StoreRow.name.label("store"),
+                   ProductRow.name.label("product"), ProductRow.unit.label("product_unit"),
+                   PriceObservationRow.unit_price.label("comparable_price"))
+            .join(ReceiptRow, ReceiptRow.id == LineItemRow.receipt_id)
+            .join(StoreRow, StoreRow.id == ReceiptRow.store_id)
+            .outerjoin(ProductRow, ProductRow.id == LineItemRow.product_id)
+            .outerjoin(PriceObservationRow, PriceObservationRow.line_item_id == LineItemRow.id)
+            .order_by(ReceiptRow.purchase_date.desc(), LineItemRow.id)
         )
-        params: list = []
         if receipt_id is not None:
-            sql += " AND li.receipt_id = ?"
-            params.append(receipt_id)
+            query = query.where(LineItemRow.receipt_id == receipt_id)
         if only_unmatched:
-            sql += " AND li.product_id IS NULL"
-        sql += " ORDER BY r.purchase_date DESC, li.id"
-        return [dict(r) for r in self.conn.execute(sql, params)]
+            query = query.where(LineItemRow.product_id.is_(None))
+        return [
+            {"id": li.id, "receipt_id": li.receipt_id, "store": store,
+             "purchase_date": date.isoformat() if date else None, "raw_name": li.raw_name,
+             "quantity": li.quantity, "unit": li.unit, "size": li.size,
+             "unit_price": li.unit_price, "line_total": li.line_total, "product": product,
+             "match_method": li.match_method, "match_score": li.match_score,
+             "comparable_price": comparable, "product_unit": product_unit}
+            for li, date, store, product, product_unit, comparable in self.session.execute(query)
+        ]
 
     # ----- prices ------------------------------------------------------------
     def observations(self) -> list[Observation]:
-        rows = self.conn.execute(
-            "SELECT p.name AS product, p.unit, s.name AS store, po.observed_date, po.unit_price "
-            "FROM price_observations po JOIN products p ON p.id = po.product_id "
-            "JOIN stores s ON s.id = po.store_id ORDER BY po.observed_date"
+        query = (
+            select(ProductRow.name, ProductRow.unit, StoreRow.name,
+                   PriceObservationRow.observed_date, PriceObservationRow.unit_price)
+            .join(ProductRow, ProductRow.id == PriceObservationRow.product_id)
+            .join(StoreRow, StoreRow.id == PriceObservationRow.store_id)
+            .order_by(PriceObservationRow.observed_date, PriceObservationRow.id)
         )
-        return [
-            Observation(r["product"], r["store"], dt.date.fromisoformat(r["observed_date"]),
-                        r["unit_price"], r["unit"])
-            for r in rows
-        ]
+        return [Observation(product, store, date, price, unit)
+                for product, unit, store, date, price in self.session.execute(query)]

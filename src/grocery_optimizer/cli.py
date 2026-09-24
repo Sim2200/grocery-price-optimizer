@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .config import DEFAULT_DB_PATH
+from .config import DATABASE_URL
 from .extraction import ExtractionError, get_extractor
 from .ingest import ingest_receipt, load_demo_data, open_db
 from .manual_entry import receipts_from_csv
@@ -88,7 +88,8 @@ def cmd_plan(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="grocery", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--db", default=str(DEFAULT_DB_PATH), help="SQLite database path")
+    parser.add_argument("--db", default=DATABASE_URL,
+                        help="SQLite file path or SQLAlchemy URL (default: $DATABASE_URL or $GROCERY_DB)")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("demo", help="load bundled SYNTHETIC receipts")

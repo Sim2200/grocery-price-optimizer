@@ -10,8 +10,8 @@ Design notes
 - Receipt upload is two-step on purpose: POST /api/receipts/extract returns a
   *draft* with suggested product matches; the UI lets the user fix it, then
   POST /api/receipts saves it. Nothing unreviewed silently enters the price DB.
-- One SQLite connection per request (a FastAPI dependency) keeps things
-  thread-safe without a connection pool.
+- One database session per request (a FastAPI dependency). `db_path` can be
+  a SQLite file or any SQLAlchemy URL (e.g. Postgres via DATABASE_URL).
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from ..catalog import load_catalog
-from ..config import LLM_MODEL, DEFAULT_DB_PATH, LLM_MATCHING, PROJECT_ROOT
+from ..config import DATABASE_URL, LLM_MATCHING, LLM_MODEL, PROJECT_ROOT
 from ..db import PriceDB
 from ..extraction import (
     VisionReceiptExtractor,
@@ -54,11 +54,13 @@ SAMPLE_LIST = PROJECT_ROOT / "data" / "sample_shopping_list.csv"
 
 
 def create_app(
-    db_path: str | Path = DEFAULT_DB_PATH,
+    db_path: str | Path = DATABASE_URL,
     extractor: ReceiptExtractor | None = None,
     use_llm_matching: bool = LLM_MATCHING,
 ) -> FastAPI:
-    """App factory. Tests pass a temp DB path and a fake extractor."""
+    """App factory. Tests pass a temp DB path and a fake extractor.
+
+    `db_path` is a SQLite file path or a SQLAlchemy database URL."""
     app = FastAPI(
         title="Grocery Price Optimizer API",
         version="0.1.0",

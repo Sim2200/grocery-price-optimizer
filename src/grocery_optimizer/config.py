@@ -22,6 +22,11 @@ SYNTHETIC_IMAGES_DIR = SYNTHETIC_DIR / "images"
 
 DEFAULT_DB_PATH = Path(os.environ.get("GROCERY_DB", PROJECT_ROOT / "data" / "grocery.db"))
 
+# Where the price database lives. DATABASE_URL (a SQLAlchemy URL such as
+# postgresql+psycopg://user:pass@host:5432/grocery) wins; otherwise the SQLite
+# file above is used.
+DATABASE_URL = os.environ.get("DATABASE_URL") or str(DEFAULT_DB_PATH)
+
 # Vision-capable model ID for receipt extraction and the optional matching fallback.
 # Required for real (non-demo) extraction; there is no default.
 LLM_MODEL = os.environ.get("GROCERY_LLM_MODEL", "")
