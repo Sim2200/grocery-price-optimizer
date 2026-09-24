@@ -49,6 +49,7 @@ from ..ingest import (
     match_receipt,
     save_receipt,
 )
+from ..insights import replay_trips, spend_breakdown
 from ..manual_entry import ManualEntryError, receipts_from_csv
 from ..matching import MatchResult
 from ..optimizer import ListItem, Plan
@@ -378,6 +379,34 @@ def create_app(
     def get_alerts(db: PriceDB = Depends(get_db)) -> list[m.AlertOut]:
         """Watched products whose latest price at some store is at or below the target."""
         return [m.AlertOut(**vars(a)) for a in price_alerts(db.watchlist(), db.observations())]
+
+    # ----- spending insights ----------------------------------------------------------
+    @app.get("/api/insights", response_model=m.Insights, tags=["insights"])
+    def insights(trip_cost: float = 5.0, db: PriceDB = Depends(get_db)) -> m.Insights:
+        """Spend by store/category/month, and what each past trip would have cost if planned."""
+        if trip_cost < 0:
+            raise HTTPException(422, "trip_cost must be >= 0")
+        lines = db.line_items()
+        categories = {p.name: p.category for p in db.products()}
+        breakdown = spend_breakdown(lines, categories)
+        with tracer.start_as_current_span("insights.replay_trips") as span:
+            trips = replay_trips(lines, db.observations(), trip_cost)
+            span.set_attribute("insights.trips", len(trips))
+        actual = round(sum(t.actual for t in trips), 2)
+        optimal = round(sum(t.optimal for t in trips), 2)
+        saved = round(actual - optimal, 2)
+        return m.Insights(
+            total_spend=round(sum(li["line_total"] for li in lines), 2),
+            receipts=len({li["receipt_id"] for li in lines}),
+            **{key: [m.Amount(label=k, amount=v) for k, v in rows]
+               for key, rows in breakdown.items()},
+            trip_cost=trip_cost, actual_total=actual, optimal_total=optimal,
+            estimated_savings=saved,
+            estimated_savings_percent=round(100 * saved / actual, 1) if actual else 0.0,
+            trips=[m.TripReplayOut(receipt_id=t.receipt_id, store=t.store, date=t.date,
+                                   actual=t.actual, optimal=t.optimal, saved=t.saved,
+                                   stores_in_plan=t.stores_in_plan) for t in trips],
+        )
 
     # ----- plan --------------------------------------------------------------------
     @app.post("/api/plan", response_model=m.PlanResult, tags=["plan"])

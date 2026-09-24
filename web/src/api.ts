@@ -127,6 +127,35 @@ export interface WatchItem {
   alerts: PriceAlert[];
 }
 
+export interface Amount {
+  label: string;
+  amount: number;
+}
+
+export interface TripReplay {
+  receipt_id: number;
+  store: string;
+  date: string;
+  actual: number;
+  optimal: number;
+  saved: number;
+  stores_in_plan: string[];
+}
+
+export interface Insights {
+  total_spend: number;
+  receipts: number;
+  by_store: Amount[];
+  by_category: Amount[];
+  by_month: Amount[];
+  trip_cost: number;
+  actual_total: number;
+  optimal_total: number;
+  estimated_savings: number;
+  estimated_savings_percent: number;
+  trips: TripReplay[];
+}
+
 export interface ShoppingItem {
   product: string;
   quantity: number;
@@ -254,6 +283,8 @@ export const api = {
   unwatch: (product: string) =>
     request<void>(`/api/watchlist/${encodeURIComponent(product)}`, { method: "DELETE" }),
   alerts: () => request<PriceAlert[]>("/api/alerts"),
+
+  insights: (tripCost: number) => request<Insights>(`/api/insights?trip_cost=${tripCost}`),
 
   plan: (body: PlanRequest) => request<PlanResult>("/api/plan", json("POST", body)),
 };

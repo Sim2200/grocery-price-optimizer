@@ -179,6 +179,35 @@ class WatchOut(BaseModel):
     alerts: list[AlertOut]
 
 
+class Amount(BaseModel):
+    label: str
+    amount: float
+
+
+class TripReplayOut(BaseModel):
+    receipt_id: int
+    store: str
+    date: dt.date
+    actual: float
+    optimal: float
+    saved: float
+    stores_in_plan: list[str]
+
+
+class Insights(BaseModel):
+    total_spend: float
+    receipts: int
+    by_store: list[Amount]
+    by_category: list[Amount]
+    by_month: list[Amount]
+    trip_cost: float
+    actual_total: float = Field(description="Paid for the comparable lines + one trip per receipt")
+    optimal_total: float = Field(description="The optimizer's plans for the same items")
+    estimated_savings: float
+    estimated_savings_percent: float
+    trips: list[TripReplayOut]
+
+
 class ShoppingItem(BaseModel):
     product: str
     quantity: float = Field(gt=0)

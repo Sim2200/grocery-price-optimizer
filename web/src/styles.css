@@ -116,3 +116,9 @@ tr.row-unmatched { background: #fff7ed; }
   padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
 .watch-form { align-items: flex-end; }
 a.badge { text-decoration: none; }
+
+.chart-figure { margin: 0; }
+.inline-label { flex-direction: row; align-items: center; gap: 0.5rem; }
+/* Visually hidden but read by screen readers. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

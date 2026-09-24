@@ -6,12 +6,14 @@ import PlanPage from "./pages/PlanPage";
 
 // The charts library is large, so the Prices page is loaded only when opened.
 const PricesPage = lazy(() => import("./pages/PricesPage"));
+const InsightsPage = lazy(() => import("./pages/InsightsPage"));
 
 const TABS = [
   { id: "upload", label: "Upload receipts" },
   { id: "receipts", label: "Receipts" },
   { id: "prices", label: "Prices" },
   { id: "plan", label: "Plan my trip" },
+  { id: "insights", label: "Insights" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -103,6 +105,11 @@ export default function App() {
           </Suspense>
         )}
         {tab === "plan" && <PlanPage version={dataVersion} />}
+        {tab === "insights" && (
+          <Suspense fallback={<p className="muted">Loading...</p>}>
+            <InsightsPage version={dataVersion} />
+          </Suspense>
+        )}
       </main>
     </div>
   );
