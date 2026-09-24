@@ -3,7 +3,7 @@
 **Turn grocery receipts into a per-store price database, then find the cheapest way to buy a
 shopping list across stores, counting the cost of each extra trip.**
 
-By **Simran Kharbanda** · [Portfolio](https://sim2200.github.io/Portfolio/)
+By **Simran Kharbanda**
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -369,4 +369,4 @@ tests/              pytest suite
 
 ## Author
 
-**Simran Kharbanda** — see more of my work on my [portfolio](https://sim2200.github.io/Portfolio/).
+**Simran Kharbanda**
