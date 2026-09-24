@@ -31,6 +31,7 @@ from fastapi.responses import FileResponse
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SpanExporter
 
+from ..alerts import latest_by_store, price_alerts
 from ..catalog import load_catalog
 from ..config import DATABASE_URL, LLM_MATCHING, LLM_MODEL, PROJECT_ROOT
 from ..db import PriceDB
@@ -334,6 +335,49 @@ def create_app(
     def price_history(product: str, db: PriceDB = Depends(get_db)) -> list[m.PricePoint]:
         return [m.PricePoint(store=o.store, date=o.observed_date, unit_price=round(o.unit_price, 4))
                 for o in db.observations() if o.product == product]
+
+    # ----- watchlist & price-drop alerts ------------------------------------------
+    def _watch_rows(db: PriceDB) -> list[m.WatchOut]:
+        observations = db.observations()
+        watchlist = db.watchlist()
+        units = {p.name: p.unit for p in db.products()}
+        alerts = price_alerts(watchlist, observations)
+        rows = []
+        for product, target in watchlist.items():
+            latest = {store: hist[-1].unit_price
+                      for store, hist in latest_by_store(observations, product).items()}
+            best_store = min(latest, key=latest.__getitem__) if latest else None
+            rows.append(m.WatchOut(
+                product=product, unit=units[product], target_price=target,
+                best_price=round(latest[best_store], 4) if best_store else None,
+                best_store=best_store,
+                alerts=[m.AlertOut(**vars(a)) for a in alerts if a.product == product]))
+        return rows
+
+    @app.get("/api/watchlist", response_model=list[m.WatchOut], tags=["alerts"])
+    def get_watchlist(db: PriceDB = Depends(get_db)) -> list[m.WatchOut]:
+        return _watch_rows(db)
+
+    @app.put("/api/watchlist", response_model=list[m.WatchOut], tags=["alerts"])
+    def put_watch(body: m.WatchIn, db: PriceDB = Depends(get_db)) -> list[m.WatchOut]:
+        """Watch a product, or change its target price."""
+        try:
+            db.set_watch(body.product, body.target_price)
+        except KeyError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return _watch_rows(db)
+
+    @app.delete("/api/watchlist/{product}", status_code=204, tags=["alerts"])
+    def delete_watch(product: str, db: PriceDB = Depends(get_db)) -> None:
+        try:
+            db.delete_watch(product)
+        except KeyError as exc:
+            raise HTTPException(404, str(exc)) from exc
+
+    @app.get("/api/alerts", response_model=list[m.AlertOut], tags=["alerts"])
+    def get_alerts(db: PriceDB = Depends(get_db)) -> list[m.AlertOut]:
+        """Watched products whose latest price at some store is at or below the target."""
+        return [m.AlertOut(**vars(a)) for a in price_alerts(db.watchlist(), db.observations())]
 
     # ----- plan --------------------------------------------------------------------
     @app.post("/api/plan", response_model=m.PlanResult, tags=["plan"])

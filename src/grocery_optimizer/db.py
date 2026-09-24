@@ -36,6 +36,7 @@ from .orm import (
     ProductRow,
     ReceiptRow,
     StoreRow,
+    WatchRow,
 )
 from .schemas import LineItem, Receipt
 from .units import comparable_unit_price
@@ -117,7 +118,7 @@ class PriceDB:
         self.session.execute(text("SELECT 1"))
 
     def reset_data(self) -> None:
-        """Delete all receipts, prices, aliases and stores (products are kept)."""
+        """Delete all receipts, prices, aliases and stores (products and the watchlist are kept)."""
         for model in (PriceObservationRow, LineItemRow, ReceiptRow, AliasRow, StoreRow):
             self.session.execute(delete(model))
         self.session.commit()
@@ -198,6 +199,30 @@ class PriceDB:
     def delete_alias(self, alias: str) -> None:
         self.session.execute(delete(AliasRow).where(AliasRow.alias == alias))
         self.session.commit()
+
+    # ----- watchlist ---------------------------------------------------------
+    def set_watch(self, product_name: str, target_price: float) -> None:
+        """Watch a product (or change its target price)."""
+        product = self._product(product_name)
+        row = self.session.scalar(select(WatchRow).where(WatchRow.product_id == product.id))
+        if row is None:
+            self.session.add(WatchRow(product=product, target_price=target_price,
+                                      created_at=_now()))
+        else:
+            row.target_price = target_price
+        self.session.commit()
+
+    def delete_watch(self, product_name: str) -> None:
+        product = self._product(product_name)
+        self.session.execute(delete(WatchRow).where(WatchRow.product_id == product.id))
+        self.session.commit()
+
+    def watchlist(self) -> dict[str, float]:
+        """product name -> target price, sorted by product name."""
+        query = (select(ProductRow.name, WatchRow.target_price)
+                 .join(ProductRow, ProductRow.id == WatchRow.product_id)
+                 .order_by(ProductRow.name))
+        return {name: target for name, target in self.session.execute(query)}
 
     # ----- receipts ----------------------------------------------------------
     def insert_receipt(

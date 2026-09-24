@@ -6,27 +6,52 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { api, unitPrice, type PriceMethod, type PricePoint, type PriceTable } from "../api";
+import {
+  api,
+  unitPrice,
+  type PriceMethod,
+  type PricePoint,
+  type PriceTable,
+  type WatchItem,
+} from "../api";
+import Watchlist from "../components/Watchlist";
 
 const STORE_COLORS = ["#2563eb", "#16a34a", "#d97706", "#9333ea", "#dc2626", "#0891b2"];
 
-/** Product x store comparison table, plus charts for the selected product. */
-export default function PricesPage({ version }: { version: number }) {
+/** Product x store comparison table, charts for the selected product, and the watchlist. */
+export default function PricesPage({
+  version,
+  onWatchlistChanged,
+}: {
+  version: number;
+  onWatchlistChanged: () => void;
+}) {
   const [method, setMethod] = useState<PriceMethod>("weighted");
   const [table, setTable] = useState<PriceTable | null>(null);
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [history, setHistory] = useState<PricePoint[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.prices(method).then(setTable).catch((e: Error) => setError(e.message));
   }, [method, version]);
+
+  useEffect(() => {
+    api.watchlist().then(setWatchlist).catch((e: Error) => setError(e.message));
+  }, [version]);
+
+  function updateWatchlist(items: WatchItem[]) {
+    setWatchlist(items);
+    onWatchlistChanged();
+  }
 
   useEffect(() => {
     if (!selected) return;
@@ -44,6 +69,7 @@ export default function PricesPage({ version }: { version: number }) {
   );
   const stores = table?.stores ?? [];
   const selectedRow = table?.rows.find((r) => r.product === selected) ?? null;
+  const selectedWatch = watchlist.find((w) => w.product === selected) ?? null;
 
   const barData = selectedRow
     ? stores
@@ -166,6 +192,14 @@ export default function PricesPage({ version }: { version: number }) {
                     formatter={(v) => unitPrice(Number(v), selectedRow.unit)}
                   />
                   <Legend />
+                  {selectedWatch && (
+                    <ReferenceLine
+                      y={selectedWatch.target_price}
+                      stroke="#b91c1c"
+                      strokeDasharray="4 4"
+                      label={{ value: "your target", position: "insideTopRight", fontSize: 12 }}
+                    />
+                  )}
                   {historySeries.map((series, i) => (
                     <Line
                       key={series.store}
@@ -183,6 +217,12 @@ export default function PricesPage({ version }: { version: number }) {
           </div>
         </section>
       )}
+
+      <Watchlist
+        items={watchlist}
+        products={table.rows.map((r) => ({ product: r.product, unit: r.unit }))}
+        onChange={updateWatchlist}
+      />
     </div>
   );
 }

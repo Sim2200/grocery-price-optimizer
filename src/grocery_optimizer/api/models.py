@@ -156,6 +156,29 @@ class PricePoint(BaseModel):
     unit_price: float
 
 
+class WatchIn(BaseModel):
+    product: str
+    target_price: float = Field(gt=0, description="Alert at or below this price per product unit")
+
+
+class AlertOut(BaseModel):
+    product: str
+    store: str
+    price: float
+    target_price: float
+    observed_date: dt.date
+    previous_price: float | None
+
+
+class WatchOut(BaseModel):
+    product: str
+    unit: str
+    target_price: float
+    best_price: float | None = Field(description="Lowest latest price across stores")
+    best_store: str | None
+    alerts: list[AlertOut]
+
+
 class ShoppingItem(BaseModel):
     product: str
     quantity: float = Field(gt=0)

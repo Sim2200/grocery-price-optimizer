@@ -110,3 +110,9 @@ tr.row-unmatched { background: #fff7ed; }
 .stop { border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem; }
 .stop ul { list-style: none; padding: 0; margin: 0.25rem 0 0; font-size: 0.9rem; }
 .stop li { padding: 0.15rem 0; gap: 0.5rem; }
+
+.watchlist { list-style: none; padding: 0; margin: 0 0 0.75rem; }
+.watch-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.watch-form { align-items: flex-end; }
+a.badge { text-decoration: none; }

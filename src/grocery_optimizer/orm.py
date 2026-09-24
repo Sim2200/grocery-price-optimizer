@@ -12,6 +12,7 @@ aliases             raw receipt name -> product (user corrections + confirmed ma
 receipts            one row per receipt (store, date, printed total, source)
 line_items          every receipt line exactly as extracted, plus its product match
 price_observations  comparable unit price ($/unit of the product) per line item
+watchlist           products the user wants a price-drop alert for
 """
 
 from __future__ import annotations
@@ -107,3 +108,17 @@ class PriceObservationRow(Base):
     product: Mapped[ProductRow] = relationship()
     store: Mapped[StoreRow] = relationship()
 
+
+
+class WatchRow(Base):
+    """Alert me when `product` costs `target_price` (per product unit) or less at any store."""
+
+    __tablename__ = "watchlist"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("products.id", ondelete="CASCADE"), unique=True)
+    target_price: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[str] = mapped_column(String(32))
+
+    product: Mapped[ProductRow] = relationship()

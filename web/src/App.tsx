@@ -23,6 +23,7 @@ function tabFromHash(): TabId {
 export default function App() {
   const [tab, setTab] = useState<TabId>(tabFromHash);
   const [health, setHealth] = useState<Health | null>(null);
+  const [alertCount, setAlertCount] = useState(0);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [demoMessage, setDemoMessage] = useState<string | null>(null);
   // Bumped whenever data changes so pages refetch.
@@ -35,6 +36,13 @@ export default function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    api
+      .alerts()
+      .then((a) => setAlertCount(a.length))
+      .catch(() => setAlertCount(0));
+  }, [dataVersion]);
 
   async function loadDemo() {
     if (!window.confirm("Replace all saved receipts with the bundled SYNTHETIC sample data?")) return;
@@ -51,6 +59,11 @@ export default function App() {
           <p className="muted">Receipts in, cheapest shopping plan out.</p>
         </div>
         <div className="header-right">
+          {alertCount > 0 && (
+            <a href="#prices" className="badge badge-ok" aria-label={`${alertCount} price-drop alerts`}>
+              {alertCount} price {alertCount === 1 ? "drop" : "drops"} on your watchlist
+            </a>
+          )}
           {health && (
             <span className={`badge ${health.demo_mode ? "badge-warn" : "badge-ok"}`}>
               {health.demo_mode ? "Demo mode (no API key)" : `LLM extraction: ${health.model}`}
@@ -86,7 +99,7 @@ export default function App() {
         {tab === "receipts" && <ReceiptsPage version={dataVersion} onChanged={refresh} />}
         {tab === "prices" && (
           <Suspense fallback={<p className="muted">Loading...</p>}>
-            <PricesPage version={dataVersion} />
+            <PricesPage version={dataVersion} onWatchlistChanged={refresh} />
           </Suspense>
         )}
         {tab === "plan" && <PlanPage version={dataVersion} />}

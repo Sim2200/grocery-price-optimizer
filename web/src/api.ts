@@ -109,6 +109,24 @@ export interface PricePoint {
   unit_price: number;
 }
 
+export interface PriceAlert {
+  product: string;
+  store: string;
+  price: number;
+  target_price: number;
+  observed_date: string;
+  previous_price: number | null;
+}
+
+export interface WatchItem {
+  product: string;
+  unit: string;
+  target_price: number;
+  best_price: number | null;
+  best_store: string | null;
+  alerts: PriceAlert[];
+}
+
 export interface ShoppingItem {
   product: string;
   quantity: number;
@@ -229,6 +247,13 @@ export const api = {
     request<PriceTable>(`/api/prices?method=${method}`),
   priceHistory: (product: string) =>
     request<PricePoint[]>(`/api/prices/history?product=${encodeURIComponent(product)}`),
+
+  watchlist: () => request<WatchItem[]>("/api/watchlist"),
+  watch: (product: string, target_price: number) =>
+    request<WatchItem[]>("/api/watchlist", json("PUT", { product, target_price })),
+  unwatch: (product: string) =>
+    request<void>(`/api/watchlist/${encodeURIComponent(product)}`, { method: "DELETE" }),
+  alerts: () => request<PriceAlert[]>("/api/alerts"),
 
   plan: (body: PlanRequest) => request<PlanResult>("/api/plan", json("POST", body)),
 };
