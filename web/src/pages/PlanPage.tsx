@@ -9,6 +9,7 @@ import {
   type Product,
   type ShoppingItem,
 } from "../api";
+import ListAssistant from "../components/ListAssistant";
 
 function PlanCard({ plan, title, highlight }: { plan: Plan; title: string; highlight?: boolean }) {
   return (
@@ -106,6 +107,8 @@ export default function PlanPage({ version }: { version: number }) {
 
   return (
     <div className="stack">
+      <ListAssistant onAdd={(added) => setItems((all) => [...all, ...added])} />
+
       <section className="card">
         <div className="row spread">
           <h2>Shopping list</h2>

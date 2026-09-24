@@ -208,6 +208,25 @@ class Insights(BaseModel):
     trips: list[TripReplayOut]
 
 
+class AssistIn(BaseModel):
+    text: str = Field(min_length=1, max_length=5000,
+                      description='A recipe, a dish ("tacos for 4") or a free-text list')
+
+
+class AssistLine(BaseModel):
+    request: str
+    product: str | None
+    quantity: float
+    unit: str
+    note: str
+
+
+class AssistOut(BaseModel):
+    source: str
+    lines: list[AssistLine]
+    notes: list[str]
+
+
 class ShoppingItem(BaseModel):
     product: str
     quantity: float = Field(gt=0)

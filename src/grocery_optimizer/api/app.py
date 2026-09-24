@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
@@ -32,7 +32,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SpanExporter
 
 from ..alerts import latest_by_store, price_alerts
-from ..catalog import load_catalog
+from ..catalog import Product, load_catalog
 from ..config import DATABASE_URL, LLM_MATCHING, LLM_MODEL, PROJECT_ROOT
 from ..db import PriceDB
 from ..extraction import (
@@ -50,8 +50,9 @@ from ..ingest import (
     save_receipt,
 )
 from ..insights import replay_trips, spend_breakdown
+from ..list_assistant import ListAssistant, ListAssistantError, get_list_assistant
 from ..manual_entry import ManualEntryError, receipts_from_csv
-from ..matching import MatchResult
+from ..matching import MatchResult, ProductMatcher
 from ..optimizer import ListItem, Plan
 from ..planning import plan_trip, read_shopping_list
 from ..pricing import current_prices
@@ -74,11 +75,13 @@ def create_app(
     extractor: ReceiptExtractor | None = None,
     use_llm_matching: bool = LLM_MATCHING,
     span_exporter: SpanExporter | None = None,
+    list_assistant: Callable[[list[Product], ProductMatcher], ListAssistant] = get_list_assistant,
 ) -> FastAPI:
     """App factory. Tests pass a temp DB path and a fake extractor.
 
     `db_path` is a SQLite file path or a SQLAlchemy database URL. `span_exporter`
-    lets tests capture trace spans in memory."""
+    lets tests capture trace spans in memory; `list_assistant` builds the recipe/list
+    assistant (tests pass one with a fake LLM client)."""
     configure_logging()
     app = FastAPI(
         title="Grocery Price Optimizer API",
@@ -88,6 +91,7 @@ def create_app(
     app.state.db_path = str(db_path)
     app.state.extractor = extractor or get_extractor()
     app.state.use_llm_matching = use_llm_matching
+    app.state.list_assistant = list_assistant
 
     # Vite dev server runs on :5173 and calls the API on :8000.
     app.add_middleware(
@@ -407,6 +411,31 @@ def create_app(
                                    actual=t.actual, optimal=t.optimal, saved=t.saved,
                                    stores_in_plan=t.stores_in_plan) for t in trips],
         )
+
+    # ----- recipe / free-text list assistant -------------------------------------------
+    @app.post("/api/shopping-list/assist", response_model=m.AssistOut, tags=["plan"])
+    def assist_list(body: m.AssistIn, request: Request,
+                    db: PriceDB = Depends(get_db)) -> m.AssistOut:
+        """Turn a recipe or free text into a draft shopping list of catalog products.
+        Sync on purpose: the LLM calls block, so FastAPI runs this in a worker thread."""
+        matcher = build_matcher(db)
+        assistant = request.app.state.list_assistant(matcher.catalog, matcher)
+        kind = type(assistant).__name__
+        with tracer.start_as_current_span("list.assist") as span:
+            span.set_attribute("assistant", kind)
+            try:
+                draft = assistant.build(body.text)
+            except ListAssistantError as exc:
+                metrics.LISTS_ASSISTED.labels(kind, "error").inc()
+                logger.warning("list assist failed", extra={"assistant": kind, "error": str(exc)})
+                raise HTTPException(422, str(exc)) from exc
+            span.set_attribute("list.lines", len(draft.lines))
+        metrics.LISTS_ASSISTED.labels(kind, "success").inc()
+        logger.info("list assisted", extra={
+            "assistant": kind, "lines": len(draft.lines),
+            "unmatched": sum(line.product is None for line in draft.lines)})
+        return m.AssistOut(source=draft.source, notes=draft.notes,
+                           lines=[m.AssistLine(**vars(line)) for line in draft.lines])
 
     # ----- plan --------------------------------------------------------------------
     @app.post("/api/plan", response_model=m.PlanResult, tags=["plan"])

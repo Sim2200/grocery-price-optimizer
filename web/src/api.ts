@@ -156,6 +156,20 @@ export interface Insights {
   trips: TripReplay[];
 }
 
+export interface AssistLine {
+  request: string;
+  product: string | null;
+  quantity: number;
+  unit: string;
+  note: string;
+}
+
+export interface AssistResult {
+  source: string;
+  lines: AssistLine[];
+  notes: string[];
+}
+
 export interface ShoppingItem {
   product: string;
   quantity: number;
@@ -285,6 +299,9 @@ export const api = {
   alerts: () => request<PriceAlert[]>("/api/alerts"),
 
   insights: (tripCost: number) => request<Insights>(`/api/insights?trip_cost=${tripCost}`),
+
+  assistList: (text: string) =>
+    request<AssistResult>("/api/shopping-list/assist", json("POST", { text })),
 
   plan: (body: PlanRequest) => request<PlanResult>("/api/plan", json("POST", body)),
 };

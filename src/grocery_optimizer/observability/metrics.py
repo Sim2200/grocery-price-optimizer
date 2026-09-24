@@ -30,6 +30,9 @@ RECEIPTS_SAVED = Counter(
     "receipts_saved_total", "Reviewed receipts saved to the price database", ["source"])
 LINES_MATCHED = Counter(
     "line_items_matched_total", "Receipt lines by how they were matched to a product", ["method"])
+LISTS_ASSISTED = Counter(
+    "shopping_lists_assisted_total", "Recipe/free-text to shopping-list requests",
+    ["assistant", "outcome"])
 OPTIMIZER_SECONDS = Histogram(
     "optimizer_solve_seconds", "Time to plan a trip (MILP plus both baselines)",
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5))
