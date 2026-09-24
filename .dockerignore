@@ -1,0 +1,16 @@
+# Keep the build context small and never ship local data or secrets.
+.git
+.github
+.venv
+.pytest_cache
+**/__pycache__
+*.egg-info
+web/node_modules
+web/dist
+*.db
+*.sqlite
+data/my_receipts
+evals/results
+.env
+deploy
+docs

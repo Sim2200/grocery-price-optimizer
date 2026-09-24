@@ -159,3 +159,20 @@ def test_delete_receipt(demo_client):
     rid = demo_client.get("/api/receipts").json()[0]["id"]
     assert demo_client.delete(f"/api/receipts/{rid}").status_code == 204
     assert rid not in [r["id"] for r in demo_client.get("/api/receipts").json()]
+
+
+def test_health_probes(client):
+    assert client.get("/healthz").json() == {"status": "ok"}
+    assert client.get("/readyz").json() == {"status": "ready"}
+
+
+def test_readiness_fails_when_database_is_down(client, monkeypatch):
+    from grocery_optimizer.db import PriceDB
+
+    def broken(self):
+        raise ConnectionError("db down")
+
+    monkeypatch.setattr(PriceDB, "ping", broken)
+    r = client.get("/readyz")
+    assert r.status_code == 503 and "ConnectionError" in r.json()["detail"]
+    assert client.get("/healthz").status_code == 200  # liveness is unaffected

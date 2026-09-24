@@ -1,0 +1,17 @@
+# Local stack: `docker compose up --build`, then open http://localhost:8000
+services:
+  app:
+    build: .
+    image: grocery-optimizer:local
+    ports:
+      - "8000:8000"
+    environment:
+      GROCERY_DB: /app/var/grocery.db
+      # Leave these empty for offline demo mode.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GROCERY_LLM_MODEL: ${GROCERY_LLM_MODEL:-}
+    volumes:
+      - grocery-data:/app/var   # the SQLite file survives container restarts
+
+volumes:
+  grocery-data:

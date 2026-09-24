@@ -3,7 +3,8 @@ PIP := .venv/bin/pip
 UVICORN := .venv/bin/uvicorn --factory grocery_optimizer.api.app:create_app
 
 .PHONY: setup setup-py setup-web dev api web build serve demo plan test typecheck check \
-        eval eval-llm eval-matching benchmark data clean
+        eval eval-llm eval-matching benchmark data clean \
+        docker-build docker-up docker-down
 
 setup: setup-py setup-web  ## install everything (Python venv + frontend packages)
 
@@ -60,6 +61,15 @@ benchmark:        ## optimizer vs baselines on the synthetic price DB
 
 data:             ## regenerate the SYNTHETIC receipts (JSON + PNG) from a fixed seed
 	$(PY) scripts/generate_synthetic_data.py
+
+docker-build:     ## build the production image (frontend + API in one container)
+	docker build -t grocery-optimizer:local .
+
+docker-up:        ## run the stack with Docker Compose (app on :8000)
+	docker compose up --build -d
+
+docker-down:
+	docker compose down
 
 clean:
 	rm -rf data/grocery.db .pytest_cache web/dist

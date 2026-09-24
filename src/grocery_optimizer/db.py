@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from sqlalchemy import Engine, case, create_engine, delete, event, func, select
+from sqlalchemy import Engine, case, create_engine, delete, event, func, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -111,6 +111,10 @@ class PriceDB:
         self.session.close()
         if self._owns_engine:
             self.engine.dispose()
+
+    def ping(self) -> None:
+        """Raise if the database can't run a trivial query (used by the readiness probe)."""
+        self.session.execute(text("SELECT 1"))
 
     def reset_data(self) -> None:
         """Delete all receipts, prices, aliases and stores (products are kept)."""

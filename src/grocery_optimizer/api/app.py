@@ -89,6 +89,22 @@ def create_app(
         finally:
             db.close()
 
+    # ----- probes (Docker HEALTHCHECK, Kubernetes liveness/readiness) --------------
+    @app.get("/healthz", tags=["meta"])
+    def healthz() -> dict:
+        """Liveness: the process is up and serving requests. Deliberately checks nothing else,
+        so a database outage doesn't make Kubernetes restart healthy pods."""
+        return {"status": "ok"}
+
+    @app.get("/readyz", tags=["meta"])
+    def readyz(db: PriceDB = Depends(get_db)) -> dict:
+        """Readiness: the database answers, so this instance can take traffic."""
+        try:
+            db.ping()
+        except Exception as exc:  # any DB error means "not ready"
+            raise HTTPException(503, f"database unavailable: {type(exc).__name__}") from exc
+        return {"status": "ready"}
+
     # ----- meta --------------------------------------------------------------
     @app.get("/api/health", response_model=m.Health, tags=["meta"])
     def health(request: Request) -> m.Health:
