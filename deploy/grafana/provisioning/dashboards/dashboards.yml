@@ -1,0 +1,8 @@
+# Load every dashboard JSON in /var/lib/grafana/dashboards on startup.
+apiVersion: 1
+providers:
+  - name: grocery-optimizer
+    folder: Grocery Optimizer
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

@@ -36,4 +36,5 @@ ENV GROCERY_DB=/app/var/grocery.db
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)"
-CMD ["uvicorn", "--factory", "grocery_optimizer.api.app:create_app", "--host", "0.0.0.0", "--port", "8000"]
+# --no-access-log: the app writes its own JSON access log line (with request ID) per request.
+CMD ["uvicorn", "--factory", "grocery_optimizer.api.app:create_app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

@@ -1,0 +1,9 @@
+# Prometheus scrapes the app's /metrics endpoint every 15 seconds.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: grocery-optimizer
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:8000"]

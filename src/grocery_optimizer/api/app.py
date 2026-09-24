@@ -10,18 +10,26 @@ Design notes
 - Receipt upload is two-step on purpose: POST /api/receipts/extract returns a
   *draft* with suggested product matches; the UI lets the user fix it, then
   POST /api/receipts saves it. Nothing unreviewed silently enters the price DB.
+- Observability: every request gets an ID (X-Request-ID) that appears in its
+  JSON log lines; Prometheus metrics are served at /metrics; OpenTelemetry
+  spans cover extraction, matching and optimization (see observability/).
 - One database session per request (a FastAPI dependency). `db_path` can be
   a SQLite file or any SQLAlchemy URL (e.g. Postgres via DATABASE_URL).
 """
 
 from __future__ import annotations
 
+import logging
+import time
+import uuid
 from collections.abc import Iterator
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export import SpanExporter
 
 from ..catalog import load_catalog
 from ..config import DATABASE_URL, LLM_MATCHING, LLM_MODEL, PROJECT_ROOT
@@ -46,8 +54,14 @@ from ..optimizer import ListItem, Plan
 from ..planning import plan_trip, read_shopping_list
 from ..pricing import current_prices
 from ..schemas import Receipt, consistency_warnings
+from ..observability import metrics
+from ..observability.log import configure_logging, request_id_var
+from ..observability.tracing import setup_tracing
 from ..units import COMPARABLE_UNITS
 from . import models as m
+
+logger = logging.getLogger("grocery_optimizer.api")
+tracer = trace.get_tracer("grocery_optimizer.api")
 
 FRONTEND_DIST = PROJECT_ROOT / "web" / "dist"
 SAMPLE_LIST = PROJECT_ROOT / "data" / "sample_shopping_list.csv"
@@ -57,10 +71,13 @@ def create_app(
     db_path: str | Path = DATABASE_URL,
     extractor: ReceiptExtractor | None = None,
     use_llm_matching: bool = LLM_MATCHING,
+    span_exporter: SpanExporter | None = None,
 ) -> FastAPI:
     """App factory. Tests pass a temp DB path and a fake extractor.
 
-    `db_path` is a SQLite file path or a SQLAlchemy database URL."""
+    `db_path` is a SQLite file path or a SQLAlchemy database URL. `span_exporter`
+    lets tests capture trace spans in memory."""
+    configure_logging()
     app = FastAPI(
         title="Grocery Price Optimizer API",
         version="0.1.0",
@@ -77,6 +94,32 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def observe_requests(request: Request, call_next):
+        """Request ID + one JSON access-log line + HTTP metrics for every request."""
+        request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
+        token = request_id_var.set(request_id)  # picked up by every log line in this request
+        start = time.perf_counter()
+        status = 500  # stays 500 if the endpoint raises
+        try:
+            response = await call_next(request)
+            status = response.status_code
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            elapsed = time.perf_counter() - start
+            # The route template ("/api/receipts/{receipt_id}") keeps metric labels few.
+            route = request.scope.get("route")
+            route_label = getattr(route, "path", "unmatched")
+            metrics.HTTP_REQUESTS.labels(request.method, route_label, str(status)).inc()
+            metrics.HTTP_LATENCY.labels(request.method, route_label).observe(elapsed)
+            logger.info("request", extra={
+                "method": request.method, "path": request.url.path, "route": route_label,
+                "status": status, "duration_ms": round(elapsed * 1000, 1)})
+            request_id_var.reset(token)
+
+    app.state.tracing = setup_tracing(app, exporter=span_exporter)
 
     setup_db = PriceDB(app.state.db_path)
     setup_db.sync_catalog(load_catalog())
@@ -104,6 +147,12 @@ def create_app(
         except Exception as exc:  # any DB error means "not ready"
             raise HTTPException(503, f"database unavailable: {type(exc).__name__}") from exc
         return {"status": "ready"}
+
+    @app.get("/metrics", include_in_schema=False)
+    def prometheus_metrics() -> Response:
+        """Prometheus scrape endpoint."""
+        body, content_type = metrics.render()
+        return Response(body, media_type=content_type)
 
     # ----- meta --------------------------------------------------------------
     @app.get("/api/health", response_model=m.Health, tags=["meta"])
@@ -145,7 +194,12 @@ def create_app(
     # ----- receipts ----------------------------------------------------------------
     def _draft(receipt: Receipt, db: PriceDB, source: str, file_name: str | None,
                use_llm: bool) -> m.DraftReceipt:
-        matches = match_receipt(receipt, build_matcher(db, use_llm=use_llm))
+        with tracer.start_as_current_span("receipt.match") as span:
+            matches = match_receipt(receipt, build_matcher(db, use_llm=use_llm))
+            span.set_attribute("receipt.line_items", len(matches))
+            span.set_attribute("receipt.needs_review", sum(mr.needs_review for mr in matches))
+        for mr in matches:
+            metrics.LINES_MATCHED.labels(mr.method).inc()
         lines = [
             m.LineMatch(
                 item=item, product=mr.product, match_method=mr.method, match_score=mr.score,
@@ -169,11 +223,20 @@ def create_app(
         if not data:
             raise HTTPException(400, "Empty file")
         extractor = request.app.state.extractor
-        try:
-            receipt = extractor.extract(data, file.filename or "upload")
-        except ExtractionError as exc:
-            raise HTTPException(422, str(exc)) from exc
         source = "demo" if isinstance(extractor, DemoReceiptExtractor) else "llm"
+        with tracer.start_as_current_span("receipt.extract") as span:
+            span.set_attribute("extractor", source)
+            span.set_attribute("file.size_bytes", len(data))
+            try:
+                receipt = extractor.extract(data, file.filename or "upload")
+            except ExtractionError as exc:
+                metrics.RECEIPTS_EXTRACTED.labels(source, "error").inc()
+                logger.warning("extraction failed", extra={"extractor": source, "error": str(exc)})
+                raise HTTPException(422, str(exc)) from exc
+            span.set_attribute("receipt.line_items", len(receipt.line_items))
+        metrics.RECEIPTS_EXTRACTED.labels(source, "success").inc()
+        logger.info("receipt extracted", extra={
+            "extractor": source, "store": receipt.store, "line_items": len(receipt.line_items)})
         return _draft(receipt, db, source, file.filename, request.app.state.use_llm_matching)
 
     @app.post("/api/receipts/parse-csv", response_model=list[m.DraftReceipt], tags=["receipts"])
@@ -198,6 +261,9 @@ def create_app(
             for line in body.lines
         ]
         receipt_id = save_receipt(db, body.to_receipt(), matches, body.source, body.file_name)
+        metrics.RECEIPTS_SAVED.labels(body.source).inc()
+        logger.info("receipt saved", extra={"receipt_id": receipt_id, "source": body.source,
+                                            "line_items": len(body.lines)})
         return m.SavedReceipt(receipt_id=receipt_id)
 
     @app.get("/api/receipts", response_model=list[m.ReceiptSummary], tags=["receipts"])
@@ -279,7 +345,19 @@ def create_app(
         stores = body.stores if body.stores is not None else db.store_names()
         if body.trip_costs:
             trip_cost = {s: body.trip_costs.get(s, body.trip_cost) for s in stores}
-        result = plan_trip(db, items, stores, trip_cost, body.max_stores, body.price_method)
+        start = time.perf_counter()
+        with tracer.start_as_current_span("plan.optimize") as span:
+            result = plan_trip(db, items, stores, trip_cost, body.max_stores, body.price_method)
+            span.set_attribute("plan.items", len(items))
+            span.set_attribute("plan.stores_considered", len(stores))
+            span.set_attribute("plan.status", result.optimal.status)
+            span.set_attribute("plan.stores_used", len(result.optimal.stores))
+        seconds = time.perf_counter() - start
+        metrics.OPTIMIZER_SECONDS.observe(seconds)
+        logger.info("plan computed", extra={
+            "items": len(items), "stores_used": len(result.optimal.stores),
+            "status": result.optimal.status, "total": result.optimal.total,
+            "solve_ms": round(seconds * 1000, 1)})
         quantities = {}
         for it in items:
             quantities[it.product] = quantities.get(it.product, 0.0) + it.quantity
