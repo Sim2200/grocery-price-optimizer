@@ -1,4 +1,4 @@
-"""Extraction tests with a mocked the LLM client (no network, no API key)."""
+"""Extraction tests with a mocked LLM client (no network, no API key)."""
 
 import json
 from types import SimpleNamespace
@@ -53,7 +53,7 @@ def fake_client(**kwargs):
 
 def test_extract_valid_response():
     client, messages = fake_client(text=json.dumps(GOOD_OUTPUT))
-    receipt = VisionReceiptExtractor(client=client).extract(b"\x89PNG fake", "r.png")
+    receipt = VisionReceiptExtractor(client=client, model="test-model").extract(b"\x89PNG fake", "r.png")
     assert isinstance(receipt, Receipt)
     assert receipt.store == "Trader Joe's"
     assert receipt.line_items[0].unit == "lb"
@@ -63,9 +63,9 @@ def test_extract_valid_response():
 
 def test_request_uses_structured_output_image_block_and_fallback():
     client, messages = fake_client(text=json.dumps(GOOD_OUTPUT))
-    VisionReceiptExtractor(client=client).extract(b"img", "receipt.JPG")
+    VisionReceiptExtractor(client=client, model="test-model").extract(b"img", "receipt.JPG")
     req = messages.calls[0]
-    assert req["model"] == ""
+    assert req["model"] == "test-model"
     assert req["output_config"]["format"] == {"type": "json_schema", "schema": RECEIPT_JSON_SCHEMA}
     block = req["messages"][0]["content"][0]
     assert block["type"] == "image" and block["source"]["media_type"] == "image/jpeg"
@@ -83,29 +83,36 @@ def test_invalid_model_output_raises():
     bad = dict(GOOD_OUTPUT, line_items=[dict(GOOD_OUTPUT["line_items"][0], quantity=-1)])
     client, _ = fake_client(text=json.dumps(bad))
     with pytest.raises(ExtractionError, match="validation"):
-        VisionReceiptExtractor(client=client).extract(b"x", "r.png")
+        VisionReceiptExtractor(client=client, model="test-model").extract(b"x", "r.png")
 
 
 def test_non_json_output_raises():
     client, _ = fake_client(text="Sorry, here is the receipt: ...")
     with pytest.raises(ExtractionError, match="not valid JSON"):
-        VisionReceiptExtractor(client=client).extract(b"x", "r.png")
+        VisionReceiptExtractor(client=client, model="test-model").extract(b"x", "r.png")
 
 
 def test_refusal_and_truncation_raise():
     client, _ = fake_client(text=None, stop_reason="refusal")
     with pytest.raises(ExtractionError, match="declined"):
-        VisionReceiptExtractor(client=client).extract(b"x", "r.png")
+        VisionReceiptExtractor(client=client, model="test-model").extract(b"x", "r.png")
     client, _ = fake_client(text="{", stop_reason="max_tokens")
     with pytest.raises(ExtractionError, match="cut off"):
-        VisionReceiptExtractor(client=client).extract(b"x", "r.png")
+        VisionReceiptExtractor(client=client, model="test-model").extract(b"x", "r.png")
 
 
 def test_api_connection_error_is_wrapped():
     err = anthropic.APIConnectionError(request=httpx2.Request("POST", "https://api.anthropic.com"))
     client, _ = fake_client(error=err)
     with pytest.raises(ExtractionError, match="reach"):
-        VisionReceiptExtractor(client=client).extract(b"x", "r.png")
+        VisionReceiptExtractor(client=client, model="test-model").extract(b"x", "r.png")
+
+
+def test_missing_model_raises_before_calling_the_api():
+    client, messages = fake_client(text=json.dumps(GOOD_OUTPUT))
+    with pytest.raises(ExtractionError, match="GROCERY_LLM_MODEL"):
+        VisionReceiptExtractor(client=client, model="").extract(b"x", "r.png")
+    assert messages.calls == []
 
 
 def test_unsupported_file_type():
@@ -147,10 +154,10 @@ def test_demo_extractor_reads_sidecar_json(tmp_path):
 
 def test_llm_match_fallback_constrains_answer_to_candidates():
     client, messages = fake_client(text=json.dumps({"product": "hummus (classic)"}))
-    fallback = LLMMatchFallback(client=client)
+    fallback = LLMMatchFallback(client=client, model="test-model")
     assert fallback("CHICKPEA DIP", ["hummus (classic)", "black beans (canned)"]) == "hummus (classic)"
     enum = messages.calls[0]["output_config"]["format"]["schema"]["properties"]["product"]["enum"]
     assert enum == ["hummus (classic)", "black beans (canned)", "NONE"]
 
     client, _ = fake_client(text=json.dumps({"product": "NONE"}))
-    assert LLMMatchFallback(client=client)("SPONGE", ["hummus (classic)"]) is None
+    assert LLMMatchFallback(client=client, model="test-model")("SPONGE", ["hummus (classic)"]) is None

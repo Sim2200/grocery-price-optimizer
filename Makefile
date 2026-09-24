@@ -49,7 +49,7 @@ check: test build ## everything CI would run
 eval:             ## extraction eval harness on the SYNTHETIC noisy predictions (demo of the metrics)
 	$(PY) evals/extraction_eval.py --gold data/synthetic/receipts --pred evals/data/synthetic_noisy_predictions
 
-eval-llm:      ## real the LLM extraction on the synthetic PNGs, scored (needs ANTHROPIC_API_KEY, costs money)
+eval-llm:         ## real LLM extraction on the synthetic PNGs, scored (needs ANTHROPIC_API_KEY + GROCERY_LLM_MODEL, costs money)
 	$(PY) evals/extraction_eval.py --gold data/synthetic/receipts --images data/synthetic/images --extractor llm
 
 eval-matching:    ## product-matching accuracy on the synthetic labels, with a rules-off ablation

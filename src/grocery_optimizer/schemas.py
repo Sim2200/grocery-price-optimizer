@@ -1,6 +1,6 @@
 """Pydantic models for receipts, plus the JSON schema sent to the LLM.
 
-The same shape is used by every ingestion path (the LLM extraction, CSV /
+The same shape is used by every ingestion path (LLM extraction, CSV /
 form entry, and the bundled synthetic demo data), so everything downstream
 only ever sees a validated `Receipt`.
 """
@@ -72,7 +72,7 @@ def _nullable(json_type: str) -> dict:
     return {"anyOf": [{"type": json_type}, {"type": "null"}]}
 
 
-# Hand-written JSON schema for the LLM structured outputs. It mirrors the
+# Hand-written JSON schema for LLM structured outputs. It mirrors the
 # Pydantic models above (a unit test checks the field names stay in sync).
 # Structured outputs require every property to be listed in `required` and
 # `additionalProperties: false`; optional values are expressed as nullable.

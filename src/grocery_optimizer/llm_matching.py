@@ -1,7 +1,7 @@
 """Optional LLM fallback for product matching.
 
 Only called for receipt names that the rules + fuzzy matcher could not map
-confidently. the LLM picks one of the top fuzzy candidates or "NONE"; the
+confidently. The LLM picks one of the top fuzzy candidates or "NONE"; the
 JSON-schema `enum` makes it impossible to answer with a product that is not
 in the catalog. Results are still flagged for human review.
 """
@@ -41,7 +41,7 @@ class LLMMatchFallback:
         return self._client
 
     def __call__(self, raw_name: str, candidates: list[str]) -> str | None:
-        if not candidates:
+        if not candidates or not self.model:
             return None
         choices = [*candidates, NONE_CHOICE]
         schema = {

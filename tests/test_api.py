@@ -80,7 +80,7 @@ def test_extract_with_mocked_llm(tmp_path):
     fake_messages = SimpleNamespace(create=lambda **kw: SimpleNamespace(
         stop_reason="end_turn", content=[SimpleNamespace(type="text", text=json.dumps(output))]))
     fake_client = SimpleNamespace(beta=SimpleNamespace(messages=fake_messages))
-    app = create_app(db_path=tmp_path / "t.db", extractor=VisionReceiptExtractor(client=fake_client))
+    app = create_app(db_path=tmp_path / "t.db", extractor=VisionReceiptExtractor(client=fake_client, model="test-model"))
     with TestClient(app) as c:
         assert c.get("/api/health").json()["extractor"] == "llm"
         draft = c.post("/api/receipts/extract", files={"file": ("r.png", b"png", "image/png")}).json()

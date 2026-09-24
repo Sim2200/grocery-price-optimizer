@@ -22,7 +22,8 @@ SYNTHETIC_IMAGES_DIR = SYNTHETIC_DIR / "images"
 
 DEFAULT_DB_PATH = Path(os.environ.get("GROCERY_DB", PROJECT_ROOT / "data" / "grocery.db"))
 
-# the LLM model used for receipt extraction and the optional matching fallback.
+# Vision-capable model ID for receipt extraction and the optional matching fallback.
+# Required for real (non-demo) extraction; there is no default.
 LLM_MODEL = os.environ.get("GROCERY_LLM_MODEL", "")
 
 # Ask the LLM to resolve product names the fuzzy matcher is unsure about (needs a key).

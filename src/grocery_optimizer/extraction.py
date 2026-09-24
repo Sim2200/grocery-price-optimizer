@@ -126,6 +126,8 @@ class VisionReceiptExtractor:
         return request
 
     def extract(self, file_bytes: bytes, filename: str) -> Receipt:
+        if not self.model:
+            raise ExtractionError("No model configured. Set GROCERY_LLM_MODEL to a vision-capable model ID.")
         request = self.build_request(file_bytes, filename)
         try:
             response = self.client.beta.messages.create(**request)

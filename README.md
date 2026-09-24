@@ -9,7 +9,7 @@ By **Simran Kharbanda** · [Portfolio](https://sim2200.github.io/Portfolio/)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-TypeScript-61DAFB?logo=react&logoColor=black)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-122_passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-123_passing-brightgreen)
 
 | Upload and review | Price comparison | Trip plan |
 |---|---|---|
@@ -28,7 +28,7 @@ By **Simran Kharbanda** · [Portfolio](https://sim2200.github.io/Portfolio/)
 | **Approach** | LLM vision extraction with a JSON schema, then a person reviews the draft, then hybrid product matching (aliases → rules → fuzzy → optional LLM), unit-price normalization, and a mixed-integer program that chooses the stores. |
 | **Stack** | Python · FastAPI · Pydantic · SQLite · PuLP/CBC · rapidfuzz · Anthropic API · React 19 + TypeScript (Vite) · Recharts |
 | **Key results** *(synthetic)* | Over 500 random lists at a $2 trip cost, the plan saves **8.2% vs the best single store** and **5.4% vs per-item greedy**, in about 20 ms per plan. Rules + fuzzy matching auto-matches **106/106** synthetic names and **34/37** hand-written ones, with **0 wrong auto-matches**. |
-| **Quality** | 122 pytest tests (no network needed), a brute-force cross-check of the optimizer, a TypeScript type check, and three eval scripts. |
+| **Quality** | 123 pytest tests (no network needed), a brute-force cross-check of the optimizer, a TypeScript type check, and three eval scripts. |
 
 ## The problem
 
@@ -99,8 +99,8 @@ database.
 ### 1. Receipt extraction · `extraction.py`, `schemas.py`
 
 - The image (PNG, JPEG, WEBP or GIF) or PDF goes to the Anthropic API as a base64 `image` or
-  `document` block. The default model is `<model-id>`, and `GROCERY_LLM_MODEL`
-  overrides it.
+  `document` block. The model ID comes from
+  `GROCERY_LLM_MODEL`, which is required in real mode.
 - **Structured outputs.** A JSON schema in `output_config.format` makes sure the reply is valid
   JSON with a store, a date, line items (`raw_name`, `quantity`, `unit`, `size`, `unit_price`,
   `line_total`) and a `total`.
@@ -316,19 +316,19 @@ Open http://localhost:5173 and click **Load synthetic demo data**.
 | `make serve` | build the React app and serve it from FastAPI at :8000 |
 | `make api` | API only (docs at :8000/docs) |
 | `make demo && make plan` | terminal only: load demo data and print a trip plan |
-| `make test` | 122 Python tests, no network or key needed |
+| `make test` | 123 Python tests, no network or key needed |
 | `make typecheck` / `make build` | TypeScript check / production build |
 | `make eval` · `make eval-matching` · `make benchmark` | the evals behind the results above |
-| `make eval-llm` | real LLM extraction on the synthetic images (needs a key) |
+| `make eval-llm` | real LLM extraction on the synthetic images (needs a key and a model ID) |
 
 **Demo mode vs real mode.** If `ANTHROPIC_API_KEY` isn't set, the app runs fully offline on the
-synthetic data, and CSV entry, review, prices and planning all work. With a key set, uploads go
-through the model. Each receipt is one API call. Set `GROCERY_LLM_MATCHING=1` to turn on the LLM
+synthetic data, and CSV entry, review, prices and planning all work. With a key and a model ID
+set (`GROCERY_LLM_MODEL`), uploads go through the model. Each receipt is one API call. Set `GROCERY_LLM_MATCHING=1` to turn on the LLM
 matching fallback, or `GROCERY_DEMO=1` to force demo mode.
 
 ### Adding your own receipts
 
-- **Photos or PDFs:** set a key, run `make dev`, drag the files onto Upload, review the draft,
+- **Photos or PDFs:** set `ANTHROPIC_API_KEY` and `GROCERY_LLM_MODEL`, run `make dev`, drag the files onto Upload, review the draft,
   then click **Save receipt**. From the CLI:
   `.venv/bin/python -m grocery_optimizer.cli ingest photo1.jpg photo2.pdf`
 - **CSV (no key):** use the Upload page, or run

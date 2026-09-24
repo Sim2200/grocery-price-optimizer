@@ -100,7 +100,7 @@ export default function UploadPage({ onSaved, demoMode }: Props) {
           onClick={() => fileInput.current?.click()}
         >
           {busy ? (
-            <p>Extracting... (a real receipt takes a few seconds with the LLM)</p>
+            <p>Extracting... (a real receipt takes a few seconds)</p>
           ) : (
             <>
               <p>
