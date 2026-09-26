@@ -65,7 +65,7 @@ jobs:
           docker run -d --name app -p 8000:8000 grocery-optimizer:ci
           for i in $(seq 1 30); do curl -fs http://localhost:8000/healthz && break; sleep 1; done
           curl -fs http://localhost:8000/readyz
-          curl -fs http://localhost:8000/ | grep -q '<div id="root">'
+          curl -fs http://localhost:8000/upload | grep -q 'Grocery Price Optimizer'
       - name: Container logs
         if: always()
         run: docker logs app || true

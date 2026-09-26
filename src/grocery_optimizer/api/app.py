@@ -66,7 +66,7 @@ from . import models as m
 logger = logging.getLogger("grocery_optimizer.api")
 tracer = trace.get_tracer("grocery_optimizer.api")
 
-FRONTEND_DIST = PROJECT_ROOT / "web" / "dist"
+FRONTEND_DIST = PROJECT_ROOT / "web" / "out"  # Next.js static export
 SAMPLE_LIST = PROJECT_ROOT / "data" / "sample_shopping_list.csv"
 
 
@@ -490,14 +490,18 @@ def create_app(
         )
 
     # ----- serve the built React app (production-style single process) -----------
+    # The frontend is a Next.js static export: /upload is web/out/upload.html, assets
+    # live under web/out/_next/. Anything unknown falls back to index.html.
     if FRONTEND_DIST.exists():
         @app.get("/{path:path}", include_in_schema=False)
         def spa(path: str) -> FileResponse:
             if path.startswith("api/"):
                 raise HTTPException(404, "Not found")
-            candidate = (FRONTEND_DIST / path).resolve()
-            if path and candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
-                return FileResponse(candidate)
+            root = FRONTEND_DIST.resolve()
+            for name in (path, f"{path}.html", f"{path}/index.html"):
+                candidate = (FRONTEND_DIST / name).resolve()
+                if path and candidate.is_file() and root in candidate.parents:
+                    return FileResponse(candidate)
             return FileResponse(FRONTEND_DIST / "index.html")
 
     return app

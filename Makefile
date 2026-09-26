@@ -25,10 +25,10 @@ dev:              ## run API (:8000) and React dev server (:5173) together; Ctrl
 api:              ## API only, with auto-reload. Docs at http://localhost:8000/docs
 	$(UVICORN) --reload --reload-dir src --port 8000
 
-web:              ## React dev server only
+web:              ## Next.js dev server only (:5173, proxies /api to :8000)
 	cd web && npm run dev
 
-build:            ## type-check and build the frontend into web/dist
+build:            ## type-check and build the frontend (Next.js static export) into web/out
 	cd web && npm run build
 
 serve: build      ## single process: FastAPI serves the built React app at http://localhost:8000
@@ -91,4 +91,4 @@ tf-plan:          ## show what Terraform WOULD create (needs AWS credentials). T
 	cd deploy/terraform && terraform init && terraform plan
 
 clean:
-	rm -rf data/grocery.db .pytest_cache web/dist
+	rm -rf data/grocery.db .pytest_cache web/out web/.next

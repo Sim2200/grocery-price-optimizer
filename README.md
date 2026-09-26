@@ -27,7 +27,7 @@ By **Simran Kharbanda**
 | **Problem** | Prices differ between stores, but receipts are hard to compare: package sizes differ, some items are priced by weight, names are abbreviated, and each extra store costs time and gas. |
 | **Approach** | LLM vision extraction with a JSON schema, then a person reviews the draft, then hybrid product matching (aliases → rules → fuzzy → optional LLM), unit-price normalization, and a mixed-integer program that chooses the stores. |
 | **Features** | Receipt upload with review, price comparison and history, trip planning, a watchlist with price-drop alerts, a recipe/list assistant ("tacos for 4"), and spending insights that replay past trips through the planner. |
-| **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 + TypeScript (Vite) · Recharts |
+| **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 / Next.js 15 (TypeScript, static export) · Recharts |
 | **Operations** | Docker (multi-stage), Compose with Prometheus/Grafana/Jaeger, JSON logs with request IDs, Prometheus metrics, OpenTelemetry traces, a Helm chart, plan-only Terraform for AWS, GitHub Actions CI. |
 | **Key results** *(synthetic)* | Over 500 random lists at a $2 trip cost, the plan saves **8.2% vs the best single store** and **5.4% vs per-item greedy**, in about 20 ms per plan. Rules + fuzzy matching auto-matches **106/106** synthetic names and **34/37** hand-written ones, with **0 wrong auto-matches**. |
 | **Quality** | 158 pytest tests (no network needed; LLM calls are mocked), a brute-force cross-check of the optimizer, a TypeScript type check, three eval scripts, and CI on every push. |
@@ -55,7 +55,7 @@ The app solves this in three steps:
 
 ```mermaid
 flowchart LR
-    subgraph Browser["React + TypeScript (Vite)"]
+    subgraph Browser["React / Next.js (TypeScript)"]
         UP[Upload + review table]
         RC[Receipts + corrections]
         PR[Price comparison + charts]
@@ -216,7 +216,7 @@ doesn't stall the event loop.
 
 ### 6. Frontend · `web/`
 
-React 19 + TypeScript + Vite with plain CSS. All requests go through `web/src/api.ts`, whose
+React 19 on Next.js 15 (App Router, one route per tab, built as a static export that FastAPI serves) with plain CSS. All requests go through `web/src/api.ts`, whose
 types mirror the Pydantic models.
 
 - **Upload:** drag and drop (or CSV) into an editable review table with match badges,
@@ -460,7 +460,7 @@ src/grocery_optimizer/
   cli.py            command-line interface
   api/              FastAPI app + request/response models
   observability/    JSON logging, Prometheus metrics, OpenTelemetry tracing
-web/                React + TypeScript frontend (Vite)
+web/                React / Next.js frontend (TypeScript, App Router, static export)
 evals/              extraction eval, matching eval, optimizer benchmark
 scripts/            synthetic data generator
 data/synthetic/     SYNTHETIC receipts (JSON + PNG) and match labels
