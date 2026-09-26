@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { api, money, unitPrice, type Product, type ReceiptSummary, type SavedLineItem } from "../api";
 

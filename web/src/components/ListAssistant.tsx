@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { api, type AssistResult, type ShoppingItem } from "../api";
 

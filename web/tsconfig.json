@@ -1,10 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "strict": true,
     "noEmit": true,
     "noUnusedLocals": true,
@@ -12,7 +16,23 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "esModuleInterop": true,
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": [
+    "next-env.d.ts",
+    "src",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "out"
+  ]
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { api, type DraftReceipt, type Product } from "../api";
 import DraftEditor from "../components/DraftEditor";
