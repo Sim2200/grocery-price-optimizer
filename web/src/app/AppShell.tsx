@@ -40,11 +40,14 @@ function Shell({ children }: { children: ReactNode }) {
               {alertCount} price {alertCount === 1 ? "drop" : "drops"} on your watchlist
             </Link>
           )}
-          {health && (
-            <span className={`badge ${health.demo_mode ? "badge-warn" : "badge-ok"}`}>
-              {health.demo_mode ? "Demo mode (no API key)" : `LLM extraction: ${health.model}`}
-            </span>
-          )}
+          {/* Rendered before /api/health answers too, so the header keeps its height and the
+              page below does not jump when the badge text arrives (Lighthouse CLS). */}
+          <span
+            className={`badge ${health ? (health.demo_mode ? "badge-warn" : "badge-ok") : "badge-pending"}`}
+            role="status"
+          >
+            {health ? (health.demo_mode ? "Demo mode (no API key)" : `LLM extraction: ${health.model}`) : "Checking server..."}
+          </span>
           <button className="secondary" onClick={loadDemo}>
             Load synthetic demo data
           </button>
