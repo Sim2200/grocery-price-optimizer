@@ -27,6 +27,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SpanExporter
@@ -93,6 +94,10 @@ def create_app(
     app.state.extractor = extractor or get_extractor()
     app.state.use_llm_matching = use_llm_matching
     app.state.list_assistant = list_assistant
+
+    # Compress responses over 1 KB. The static export's JS is ~4x smaller gzipped, and on a
+    # phone connection transfer size dominates load time (results/lighthouse_*.json).
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # Vite dev server runs on :5173 and calls the API on :8000.
     app.add_middleware(

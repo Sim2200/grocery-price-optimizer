@@ -176,3 +176,8 @@ def test_readiness_fails_when_database_is_down(client, monkeypatch):
     r = client.get("/readyz")
     assert r.status_code == 503 and "ConnectionError" in r.json()["detail"]
     assert client.get("/healthz").status_code == 200  # liveness is unaffected
+
+
+def test_large_responses_are_gzipped(demo_client):
+    r = demo_client.get("/api/prices", headers={"Accept-Encoding": "gzip"})
+    assert r.status_code == 200 and r.headers.get("content-encoding") == "gzip"
