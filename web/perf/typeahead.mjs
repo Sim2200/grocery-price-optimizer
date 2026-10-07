@@ -5,7 +5,9 @@
 // A real browser types a 10-character query into the Prices filter at a steady pace (one key
 // every --key-delay ms, default 120 ms, roughly 50 words per minute). For each trial we count
 // the /api/products/search requests the page sent and how many the page cancelled, and time
-// from the last keystroke until the listbox shows the results for the full query.
+// from the last keystroke until the listbox last re-rendered (the results for the full query).
+// Both timestamps are taken inside the page (keydown listener, MutationObserver on the listbox)
+// so the measurement does not include the test driver's own round trips.
 // "No debounce" is the same build with the delay set to 0 through the component's test hook.
 // Both are measured on the local network and under DevTools' "Fast 3G" profile.
 import fs from "node:fs";
@@ -48,15 +50,21 @@ async function run(browser, { debounce, network }) {
     await page.waitForTimeout(400); // let anything from the previous trial settle
     sent = 0; cancelled = 0;
     await box.click();
-    await box.pressSequentially(QUERY.slice(0, -1), { delay: keyDelay });
-    await page.waitForTimeout(keyDelay);
+    // Record the last keydown and the last change to the suggestions list, in page time.
+    await page.evaluate(() => {
+      window.__lastKey = 0;
+      window.__lastRender = 0;
+      document.addEventListener("keydown", () => { window.__lastKey = performance.now(); }, { capture: true });
+      const list = document.querySelector('[role="listbox"]');
+      new MutationObserver(() => { window.__lastRender = performance.now(); })
+        .observe(list, { childList: true, subtree: true, characterData: true, attributes: true });
+    });
     const finalResponse = page.waitForResponse((r) => r.url().includes(`q=${encodeURIComponent(QUERY)}`), { timeout: 30000 });
-    const t0 = Date.now();
-    await box.press(QUERY.at(-1));
+    await box.pressSequentially(QUERY, { delay: keyDelay });
     await finalResponse;
     await page.getByRole("option").first().waitFor();
-    const ms = Date.now() - t0;
     await page.waitForTimeout(network ? 1500 : 300); // late responses / aborts are still counted
+    const ms = Math.round(await page.evaluate(() => window.__lastRender - window.__lastKey));
     samples.push({ requests_sent: sent, requests_cancelled: cancelled, time_to_results_ms: ms });
   }
   await context.close();

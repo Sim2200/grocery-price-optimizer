@@ -1,0 +1,34 @@
+{
+  "source": "next build route table (gzip sizes as reported by Next.js)",
+  "shared_first_load_kb": 103,
+  "routes": {
+    "/": {
+      "route_kb": 0.349,
+      "first_load_js_kb": 103
+    },
+    "/_not-found": {
+      "route_kb": 0.993,
+      "first_load_js_kb": 104
+    },
+    "/insights": {
+      "route_kb": 0.362,
+      "first_load_js_kb": 106
+    },
+    "/plan": {
+      "route_kb": 5.67,
+      "first_load_js_kb": 108
+    },
+    "/prices": {
+      "route_kb": 0.386,
+      "first_load_js_kb": 106
+    },
+    "/receipts": {
+      "route_kb": 3.65,
+      "first_load_js_kb": 106
+    },
+    "/upload": {
+      "route_kb": 5.16,
+      "first_load_js_kb": 108
+    }
+  }
+}

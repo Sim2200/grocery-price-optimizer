@@ -99,7 +99,7 @@ jobs:
       - run: terraform validate
 
   e2e:
-    name: Playwright e2e + responsive
+    name: Playwright e2e + responsive + Lighthouse CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -125,6 +125,16 @@ jobs:
           for i in $(seq 1 30); do curl -fs http://localhost:8000/api/health && break; sleep 1; done
       - working-directory: web
         run: npx playwright test
+      # Lighthouse CI against the same server: 3 mobile runs per page, median, and the budgets
+      # in web/lighthouserc.json (JS and total bytes, accessibility, CLS) fail the build.
+      - name: Lighthouse CI
+        working-directory: web
+        run: npx --yes @lhci/cli@0.15 autorun
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: web/lhci-reports
       - uses: actions/upload-artifact@v4
         if: always()
         with:

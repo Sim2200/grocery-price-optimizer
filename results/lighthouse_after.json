@@ -1,0 +1,307 @@
+{
+  "base": "http://localhost:8000",
+  "runs": 3,
+  "form_factor": "mobile (Lighthouse default: simulated slow 4G, 4x CPU slowdown)",
+  "pages": {
+    "/": {
+      "median": {
+        "performance": 98,
+        "accessibility": 100,
+        "best_practices": 100,
+        "seo": 91,
+        "fcp_ms": 796.056,
+        "lcp_ms": 2215.141,
+        "tbt_ms": 89,
+        "cls": 0.01,
+        "speed_index_ms": 796.056,
+        "total_bytes": 143892,
+        "js_transfer_bytes": 126073,
+        "failing_accessibility_audits": []
+      },
+      "samples": [
+        {
+          "performance": 95,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 817.1323,
+          "lcp_ms": 2422.2646,
+          "tbt_ms": 177,
+          "cls": 0.010435364475506134,
+          "speed_index_ms": 863.1364130670115,
+          "total_bytes": 149920,
+          "js_transfer_bytes": 132101,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 796.0562,
+          "lcp_ms": 2215.1405,
+          "tbt_ms": 89,
+          "cls": 0.010435364475506134,
+          "speed_index_ms": 796.0562,
+          "total_bytes": 143892,
+          "js_transfer_bytes": 126073,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 788.6493,
+          "lcp_ms": 2197.2986,
+          "tbt_ms": 89,
+          "cls": 0.010435364475506134,
+          "speed_index_ms": 788.6493,
+          "total_bytes": 139560,
+          "js_transfer_bytes": 121741,
+          "failing_accessibility_audits": []
+        }
+      ]
+    },
+    "/upload": {
+      "median": {
+        "performance": 99,
+        "accessibility": 100,
+        "best_practices": 100,
+        "seo": 91,
+        "fcp_ms": 786.482,
+        "lcp_ms": 1815.855,
+        "tbt_ms": 79,
+        "cls": 0.01,
+        "speed_index_ms": 786.482,
+        "total_bytes": 140077,
+        "js_transfer_bytes": 125216,
+        "failing_accessibility_audits": []
+      },
+      "samples": [
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 788.8216,
+          "lcp_ms": 1817.8215999999998,
+          "tbt_ms": 79,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 788.8216,
+          "total_bytes": 146105,
+          "js_transfer_bytes": 131244,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 786.4822999999999,
+          "lcp_ms": 1815.4823,
+          "tbt_ms": 79,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 786.4822999999999,
+          "total_bytes": 140077,
+          "js_transfer_bytes": 125216,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 784.8544999999999,
+          "lcp_ms": 1815.8545,
+          "tbt_ms": 81,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 784.8544999999999,
+          "total_bytes": 140077,
+          "js_transfer_bytes": 125216,
+          "failing_accessibility_audits": []
+        }
+      ]
+    },
+    "/prices": {
+      "median": {
+        "performance": 98,
+        "accessibility": 100,
+        "best_practices": 100,
+        "seo": 91,
+        "fcp_ms": 779.856,
+        "lcp_ms": 2344.713,
+        "tbt_ms": 79,
+        "cls": 0.01,
+        "speed_index_ms": 779.856,
+        "total_bytes": 135772,
+        "js_transfer_bytes": 120229,
+        "failing_accessibility_audits": []
+      },
+      "samples": [
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 779.8563999999999,
+          "lcp_ms": 2344.7128,
+          "tbt_ms": 79,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 779.8563999999999,
+          "total_bytes": 135772,
+          "js_transfer_bytes": 120229,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 779.751,
+          "lcp_ms": 2199.502,
+          "tbt_ms": 84,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 779.751,
+          "total_bytes": 139792,
+          "js_transfer_bytes": 124249,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 787.4054000000001,
+          "lcp_ms": 2357.8108,
+          "tbt_ms": 79,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 787.4054000000001,
+          "total_bytes": 135772,
+          "js_transfer_bytes": 120229,
+          "failing_accessibility_audits": []
+        }
+      ]
+    },
+    "/insights": {
+      "median": {
+        "performance": 98,
+        "accessibility": 100,
+        "best_practices": 100,
+        "seo": 91,
+        "fcp_ms": 792.004,
+        "lcp_ms": 2205.011,
+        "tbt_ms": 78,
+        "cls": 0.01,
+        "speed_index_ms": 827.264,
+        "total_bytes": 134518,
+        "js_transfer_bytes": 118111,
+        "failing_accessibility_audits": []
+      },
+      "samples": [
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 793.6223,
+          "lcp_ms": 2209.05575,
+          "tbt_ms": 78,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 1045.9771539943497,
+          "total_bytes": 134518,
+          "js_transfer_bytes": 118111,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 791.3222000000001,
+          "lcp_ms": 2203.3055,
+          "tbt_ms": 76,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 827.2642379968065,
+          "total_bytes": 134518,
+          "js_transfer_bytes": 118111,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 792.0042000000001,
+          "lcp_ms": 2205.0105000000003,
+          "tbt_ms": 83,
+          "cls": 0.01025218482221579,
+          "speed_index_ms": 803.9133679958509,
+          "total_bytes": 144050,
+          "js_transfer_bytes": 127643,
+          "failing_accessibility_audits": []
+        }
+      ]
+    },
+    "/plan": {
+      "median": {
+        "performance": 99,
+        "accessibility": 100,
+        "best_practices": 100,
+        "seo": 91,
+        "fcp_ms": 783.789,
+        "lcp_ms": 1815.789,
+        "tbt_ms": 82,
+        "cls": 0.021,
+        "speed_index_ms": 783.789,
+        "total_bytes": 141892,
+        "js_transfer_bytes": 126912,
+        "failing_accessibility_audits": []
+      },
+      "samples": [
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 784.4627,
+          "lcp_ms": 1816.4627,
+          "tbt_ms": 82,
+          "cls": 0.02124492563053245,
+          "speed_index_ms": 784.4627,
+          "total_bytes": 141892,
+          "js_transfer_bytes": 126912,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 783.7889,
+          "lcp_ms": 1815.7889,
+          "tbt_ms": 82,
+          "cls": 0.02124492563053245,
+          "speed_index_ms": 783.7889,
+          "total_bytes": 146224,
+          "js_transfer_bytes": 131244,
+          "failing_accessibility_audits": []
+        },
+        {
+          "performance": 99,
+          "accessibility": 100,
+          "best_practices": 100,
+          "seo": 91,
+          "fcp_ms": 782.3449,
+          "lcp_ms": 1808.3449,
+          "tbt_ms": 76,
+          "cls": 0.02124492563053245,
+          "speed_index_ms": 782.3449,
+          "total_bytes": 141892,
+          "js_transfer_bytes": 126912,
+          "failing_accessibility_audits": []
+        }
+      ]
+    }
+  }
+}
