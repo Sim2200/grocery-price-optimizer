@@ -25,7 +25,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from opentelemetry import trace
@@ -53,6 +53,7 @@ from ..insights import replay_trips, spend_breakdown
 from ..list_assistant import ListAssistant, ListAssistantError, get_list_assistant
 from ..manual_entry import ManualEntryError, receipts_from_csv
 from ..matching import MatchResult, ProductMatcher
+from ..search import search_products
 from ..optimizer import ListItem, Plan
 from ..planning import plan_trip, read_shopping_list
 from ..pricing import current_prices
@@ -189,6 +190,19 @@ def create_app(
     @app.get("/api/products", response_model=list[m.ProductOut], tags=["catalog"])
     def list_products(db: PriceDB = Depends(get_db)) -> list[m.ProductOut]:
         return [m.ProductOut(name=p.name, unit=p.unit, category=p.category) for p in db.products()]
+
+    @app.get("/api/products/search", response_model=list[m.ProductSearchHit], tags=["catalog"])
+    def search_catalog(
+        q: str = Query("", max_length=100),
+        limit: int = Query(8, ge=1, le=50),
+        db: PriceDB = Depends(get_db),
+    ) -> list[m.ProductSearchHit]:
+        """Typeahead search: prefix matches first, then fuzzy (typo-tolerant) matches."""
+        return [
+            m.ProductSearchHit(name=h.product.name, unit=h.product.unit, category=h.product.category,
+                               score=h.score, match=h.match)
+            for h in search_products(db.products(), q, limit)
+        ]
 
     @app.post("/api/products", response_model=m.ProductOut, status_code=201, tags=["catalog"])
     def create_product(body: m.ProductIn, db: PriceDB = Depends(get_db)) -> m.ProductOut:
