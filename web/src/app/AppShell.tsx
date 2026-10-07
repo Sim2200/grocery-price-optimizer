@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useOnline } from "../lib/useOnline";
 import { AppProvider, useApp } from "./AppContext";
 
 export const TABS = [
@@ -15,6 +16,7 @@ export const TABS = [
 
 function Shell({ children }: { children: ReactNode }) {
   const { health, alertCount, backendError, demoMessage, setDemoMessage, loadDemo } = useApp();
+  const online = useOnline();
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const current = TABS.find((t) => pathname === `/${t.id}` || pathname.startsWith(`/${t.id}/`))?.id;
@@ -34,7 +36,7 @@ function Shell({ children }: { children: ReactNode }) {
         </div>
         <div className="header-right">
           {alertCount > 0 && (
-            <Link href="/prices" className="badge badge-ok" aria-label={`${alertCount} price-drop alerts`}>
+            <Link href="/prices" className="badge badge-ok">
               {alertCount} price {alertCount === 1 ? "drop" : "drops"} on your watchlist
             </Link>
           )}
@@ -49,7 +51,13 @@ function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {backendError && (
+      {!online && (
+        <div className="alert warn offline-banner" role="status">
+          You are offline. Prices and insights show the last data this browser saw; saving and
+          planning need a connection.
+        </div>
+      )}
+      {backendError && online && (
         <div className="alert error" role="alert">
           Cannot reach the API ({backendError}). Start it with <code>make api</code>.
         </div>

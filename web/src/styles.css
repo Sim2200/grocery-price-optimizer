@@ -2,7 +2,7 @@
   --bg: #f6f7f9;
   --card: #ffffff;
   --text: #1f2937;
-  --muted: #6b7280;
+  --muted: #4b5563; /* 7:1 on white, still AA on the grey code background */
   --border: #e5e7eb;
   --accent: #2563eb;
   --accent-soft: #eff6ff;
@@ -48,7 +48,8 @@ button {
 }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.secondary { background: white; color: var(--accent); }
-button.link { background: none; border: none; color: var(--accent); padding: 0; }
+/* Text-style buttons still get a 24px-high target (WCAG 2.2 target size). */
+button.link { background: none; border: none; color: var(--accent); padding: 0.25rem 0; min-height: 24px; }
 button.link.danger { color: var(--bad); }
 
 input, select, textarea {
@@ -59,7 +60,8 @@ textarea { width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: 
 input.num { width: 6rem; text-align: right; }
 input.short { width: 6.5rem; }
 label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
-label.check { flex-direction: row; align-items: center; gap: 0.4rem; }
+label.check { flex-direction: row; align-items: center; gap: 0.5rem; min-height: 32px; }
+input[type="checkbox"] { width: 1.25rem; height: 1.25rem; margin: 0; }
 .label { font-size: 0.9rem; margin-bottom: 0.25rem; }
 details { margin-top: 1rem; }
 summary { cursor: pointer; color: var(--accent); }
@@ -97,15 +99,15 @@ tr.row-unmatched { background: #fff7ed; }
 .draft-header { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .inline-form input { min-width: 14rem; }
 
-.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 1rem; }
 
-.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .list-row { margin-bottom: 0.4rem; }
 .list-row select { min-width: 16rem; }
 .unit { width: 3rem; }
 
 .summary p { margin: 0.25rem 0; }
-.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; align-items: start; }
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 1rem; align-items: start; }
 .plan-card.highlight { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .stop { border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem; }
 .stop ul { list-style: none; padding: 0; margin: 0.25rem 0 0; font-size: 0.9rem; }
@@ -118,10 +120,42 @@ tr.row-unmatched { background: #fff7ed; }
 a.badge { text-decoration: none; }
 
 .chart-figure { margin: 0; }
+.bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.bar-list li { display: grid; grid-template-columns: minmax(5rem, 9rem) 1fr auto; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.bar-label { overflow-wrap: anywhere; }
+.bar-track { height: 0.9rem; background: #eef0f3; border-radius: 4px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 4px; }
+.bar-value { font-variant-numeric: tabular-nums; text-align: right; }
 .inline-label { flex-direction: row; align-items: center; gap: 0.5rem; }
 /* Visually hidden but read by screen readers. */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ----- typeahead (combobox) ----- */
+.typeahead { position: relative; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1 1 14rem; }
+.typeahead input { width: 100%; }
+.typeahead-list {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 10; margin: 2px 0 0; padding: 0.25rem 0;
+  list-style: none; background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.12); max-height: 18rem; overflow-y: auto;
+}
+.typeahead-list[hidden] { display: none; }
+.typeahead-list li { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  cursor: pointer; min-height: 40px; align-items: center; }
+.typeahead-list li.active { background: var(--accent-soft); }
+.typeahead-list mark { background: none; color: inherit; font-weight: 700; }
+.typeahead-list .typeahead-empty { cursor: default; color: var(--muted); }
+.typeahead-error { color: var(--bad); }
+.toolbar-controls { flex: 1 1 22rem; justify-content: flex-end; }
+
+/* ----- loading, offline ----- */
+.skeleton { background: linear-gradient(90deg, #eceef1 25%, #f5f6f8 50%, #eceef1 75%); background-size: 200% 100%;
+  border-radius: 6px; animation: shimmer 1.4s linear infinite; }
+.skeleton-title { height: 1.4rem; width: 40%; margin-bottom: 1rem; }
+.skeleton-row { height: 1.1rem; margin: 0.6rem 0; }
+.skeleton-chart { height: 300px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.offline-banner { position: sticky; top: 0; z-index: 20; }
 
 /* ----- accessibility ----- */
 /* A clear focus ring for keyboard users (mouse clicks don't show it). */
@@ -152,4 +186,16 @@ tr.clickable:focus-visible { outline-offset: -3px; }
   .big { font-size: 1.5rem; }
   .watch-row { align-items: flex-start; }
   .dropzone { padding: 1.25rem; }
+  .toolbar-controls { flex-basis: 100%; }
+  .toolbar-controls select { flex: 1 1 100%; }
+
+  /* Wide comparison tables become one card per row: the first cell is the card title and every
+     other cell shows its column name (data-label) on the left. No sideways scrolling. */
+  .responsive-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .responsive-table, .responsive-table tbody, .responsive-table tr, .responsive-table td { display: block; width: 100%; }
+  .responsive-table tr { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.6rem; padding: 0.25rem 0.5rem; }
+  .responsive-table td { border: none; display: flex; justify-content: space-between; gap: 1rem; text-align: right; }
+  .responsive-table td::before { content: attr(data-label); color: var(--muted); text-align: left; font-weight: 500; }
+  .responsive-table td.cell-title { font-weight: 600; text-align: left; display: block; }
+  .responsive-table td.cell-title::before { content: none; }
 }

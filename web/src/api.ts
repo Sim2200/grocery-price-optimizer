@@ -1,6 +1,8 @@
 // Typed client for the FastAPI backend. Every network call in the UI goes
 // through this file, and the types mirror src/grocery_optimizer/api/models.py.
 
+import { fetchWithRetry, TimeoutError } from "./lib/fetchWithRetry";
+
 export type ReceiptUnit =
   | "each" | "lb" | "oz" | "kg" | "g" | "gal" | "qt" | "pt" | "fl_oz" | "l" | "ml";
 
@@ -19,6 +21,11 @@ export interface Product {
   name: string;
   unit: string;
   category: string;
+}
+
+export interface ProductSearchHit extends Product {
+  score: number; // 0-100
+  match: "prefix" | "fuzzy";
 }
 
 export interface LineItem {
@@ -227,8 +234,17 @@ export class ApiError extends Error {
   }
 }
 
+// GETs get a timeout plus retries with backoff; other methods get the timeout only (see
+// lib/fetchWithRetry). Network failures surface as one readable message.
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init);
+  let res: Response;
+  try {
+    res = await fetchWithRetry(path, init);
+  } catch (err) {
+    if ((err as Error).name === "AbortError") throw err; // cancelled by the caller
+    if (err instanceof TimeoutError) throw err;
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  }
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`;
     try {
@@ -260,6 +276,11 @@ export const api = {
 
   stores: () => request<string[]>("/api/stores"),
   products: () => request<Product[]>("/api/products"),
+  searchProducts: (q: string, limit = 8, signal?: AbortSignal) =>
+    request<ProductSearchHit[]>(
+      `/api/products/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+      { signal },
+    ),
   createProduct: (p: Product) => request<Product>("/api/products", json("POST", p)),
 
   extractReceipt: (file: File) => {
