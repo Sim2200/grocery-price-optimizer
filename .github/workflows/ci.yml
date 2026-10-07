@@ -50,6 +50,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build
 
   docker:
@@ -96,3 +97,38 @@ jobs:
       # -backend=false: download providers/modules only; no state, no AWS credentials needed.
       - run: terraform init -backend=false
       - run: terraform validate
+
+  e2e:
+    name: Playwright e2e + responsive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run build
+      - working-directory: web
+        run: npx playwright install --with-deps chromium
+      - run: uvicorn --factory grocery_optimizer.api.app:create_app --port 8000 &
+      - run: |
+          for i in $(seq 1 30); do curl -fs http://localhost:8000/api/health && break; sleep 1; done
+      - working-directory: web
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-artifacts
+          path: |
+            web/e2e/screenshots
+            web/test-results
