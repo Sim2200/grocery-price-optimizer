@@ -9,7 +9,7 @@ By **Simran Kharbanda**
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-TypeScript-61DAFB?logo=react&logoColor=black)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy_2-SQLite%20%7C%20Postgres-D71F00)
-![Tests](https://img.shields.io/badge/tests-158_passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-164_Python_%2B_25_Vitest_passing-brightgreen)
 
 | Upload and review | Price comparison | Trip plan |
 |---|---|---|
@@ -27,10 +27,10 @@ By **Simran Kharbanda**
 | **Problem** | Prices differ between stores, but receipts are hard to compare: package sizes differ, some items are priced by weight, names are abbreviated, and each extra store costs time and gas. |
 | **Approach** | LLM vision extraction with a JSON schema, then a person reviews the draft, then hybrid product matching (aliases → rules → fuzzy → optional LLM), unit-price normalization, and a mixed-integer program that chooses the stores. |
 | **Features** | Receipt upload with review, price comparison and history, trip planning, a watchlist with price-drop alerts, a recipe/list assistant ("tacos for 4"), and spending insights that replay past trips through the planner. |
-| **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 / Next.js 15 (TypeScript, static export) · Recharts |
+| **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 / Next.js 15 (TypeScript, static export) · Recharts · Vitest · Playwright |
 | **Operations** | Docker (multi-stage), Compose with Prometheus/Grafana/Jaeger, JSON logs with request IDs, Prometheus metrics, OpenTelemetry traces, a Helm chart, plan-only Terraform for AWS, GitHub Actions CI. |
 | **Key results** *(synthetic)* | Over 500 random lists at a $2 trip cost, the plan saves **8.2% vs the best single store** and **5.4% vs per-item greedy**, in about 20 ms per plan. Rules + fuzzy matching auto-matches **106/106** synthetic names and **34/37** hand-written ones, with **0 wrong auto-matches**. |
-| **Quality** | 158 pytest tests (no network needed; LLM calls are mocked), a brute-force cross-check of the optimizer, a TypeScript type check, three eval scripts, and CI on every push. |
+| **Quality** | 164 pytest tests (no network needed; LLM calls are mocked), a brute-force cross-check of the optimizer, 25 Vitest component and unit tests, 31 Playwright browser tests (main flow plus overflow checks at five widths), Lighthouse CI budgets, a TypeScript type check, three eval scripts, and CI on every push. |
 
 ## The problem
 
@@ -230,6 +230,11 @@ types mirror the Pydantic models.
 - **Phones and accessibility:** a single-column layout with a scrollable tab bar below 640px,
   labels on every form control, keyboard support for the dropzone and table rows, and visible
   focus rings.
+- **Typeahead** (`components/Typeahead.tsx`): a WAI-ARIA combobox used for the prices filter, the watchlist and the list builder. 200 ms debounce, AbortController cancels the previous request, arrow keys / Enter / Escape, matched text highlighted. Backed by `GET /api/products/search` (prefix matches first, then rapidfuzz for typos).
+- **Fetch wrapper** (`lib/fetchWithRetry.ts`): a timeout on every request; GETs retry with exponential backoff and jitter, anything that writes never retries.
+- **Offline** (`lib/useCachedQuery.ts`, `public/sw.js`): the last good prices and insights responses are kept in localStorage and shown read-only with a stale banner when the request fails; a service worker caches the app shell so visited pages open with no connection.
+- **States:** skeletons while loading, error messages with a retry button, optimistic watchlist add and remove with rollback.
+- **Phones:** wide tables become one card per row under 640 px. Tests: Vitest + Testing Library, Playwright (main flow and overflow checks at five widths), Lighthouse CI budgets, all in GitHub Actions.
 
 ### 7. Watchlist and price-drop alerts · `alerts.py`
 
@@ -325,6 +330,48 @@ F1 = 0.932 and total match rate = 0.75, which shows the harness catches each typ
 **Real extraction accuracy hasn't been measured yet.** `make eval-llm` runs it on the
 synthetic images and needs an API key.
 
+### Frontend: performance, accessibility and slow networks · `web/perf/`
+
+Lighthouse 12 mobile emulation, 3 runs per page, median, same machine, before = commit 863c358 served without compression, after = this branch; scripts in `web/perf/`.
+
+| Page | Performance | Accessibility | LCP (ms) | TBT (ms) | CLS | JS transferred (KiB) |
+|---|---|---|---|---|---|---|
+| / | 90 → 98 | 95 → 100 | 3547 → 2215 | 112 → 89 | 0.01 → 0.01 | 398 → 123 |
+| /upload | 93 → 99 | 95 → 100 | 3174 → 1816 | 92 → 79 | 0.01 → 0.01 | 397 → 122 |
+| /prices | 74 → 98 | 100 → 100 | 6084 → 2345 | 212 → 79 | 0.01 → 0.01 | 809 → 117 |
+| /insights | 71 → 98 | 100 → 100 | 5905 → 2205 | 335 → 78 | 0.01 → 0.01 | 777 → 115 |
+| /plan | 93 → 99 | 95 → 100 | 3156 → 1816 | 81 → 82 | 0.012 → 0.021 | 397 → 124 |
+
+Best Practices was 100 on every page before and after.
+
+Accessibility audits that failed before: color-contrast and label-content-name-mismatch on the home and upload pages, target-size on the plan page. None fail after.
+
+Typeahead debounce trade-off (10-character query at 120 ms per keystroke on local and Fast 3G):
+
+| Debounce | Network | Requests per query | Cancelled | Time to results p50 (ms) | p95 (ms) |
+|---|---|---|---|---|---|
+| 200 ms | local | 1 | 0 | 210 | 212 |
+| 0 ms | local | 10 | 0 | 1 | 1 |
+| 200 ms | Fast 3G | 1 | 0 | 773 | 778 |
+| 0 ms | Fast 3G | 10 | 9 | 574 | 578 |
+
+The 200 ms debounce adds about 200 ms after the last keystroke to show results, in exchange for sending one request instead of ten.
+
+Network throttling through the DevTools protocol (Fast 3G: 562.5 ms RTT, 1.44 Mbps; Slow 3G: 2 s RTT, 360 kbps), cold cache, median of 3, before → after. "First feedback" is the first thing shown in the page body (a skeleton counts), "content" is the price table or the spending total on screen:
+
+| Profile | Page | First feedback (ms) | Content (ms) | JS (KiB) |
+|---|---|---|---|---|
+| Fast 3G | /prices | 700 → 700 | 7543 → 3521 | 812 → 115 |
+| Fast 3G | /insights | 701 → 699 | 7025 → 3523 | 774 → 113 |
+| Slow 3G | /prices | 2151 → 2149 | 25612 → 10995 | 812 → 115 |
+| Slow 3G | /insights | 2146 → 2147 | 25045 → 10989 | 774 → 113 |
+
+Offline mode: before, neither page renders. After, both render cached data (379 ms for /prices, 93 ms for /insights), with offline and stale-data banners and the watchlist form hidden.
+
+Next.js' own gzip route table barely changed: shared 103 kB before and after, / and /prices went from 103 and 105 kB to 103 and 106 kB. Those figures already assume gzip and leave out the charting library's chunk. The drop in the Lighthouse JS column comes from the server now compressing responses and from the charts loading only when a product is selected (the insights breakdowns are plain CSS bars).
+
+The longer write-up, including what did not help and how to reproduce, is in [docs/frontend-perf.md](docs/frontend-perf.md). Budgets in `web/lighthouserc.json` run in GitHub Actions on every pull request: at most 160 KiB of JavaScript and 200 KiB in total per page, accessibility at least 95, CLS at most 0.1.
+
 ## Design decisions
 
 - **MILP instead of greedy.** Greedy is only optimal when trips are free. Once trips cost
@@ -382,8 +429,9 @@ Open http://localhost:5173 and click **Load synthetic demo data**.
 | `make serve` | build the React app and serve it from FastAPI at :8000 |
 | `make api` | API only (docs at :8000/docs) |
 | `make demo && make plan` | terminal only: load demo data and print a trip plan |
-| `make test` | 158 Python tests, no network or key needed |
+| `make test` | 164 Python tests, no network or key needed |
 | `make typecheck` / `make build` | TypeScript check / production build |
+| `cd web && npm test` · `npm run e2e` | Vitest unit tests · Playwright browser tests (needs the API on :8000) |
 | `make eval` · `make eval-matching` · `make benchmark` | the evals behind the results above |
 | `make eval-llm` | real LLM extraction on the synthetic images (needs a key and a model ID) |
 

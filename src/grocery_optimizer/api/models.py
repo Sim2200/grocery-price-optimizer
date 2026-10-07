@@ -27,6 +27,11 @@ class ProductOut(BaseModel):
     category: str
 
 
+class ProductSearchHit(ProductOut):
+    score: float  # 0-100
+    match: str  # "prefix" or "fuzzy"
+
+
 class ProductIn(BaseModel):
     name: str = Field(min_length=1)
     unit: str = Field(description="lb, oz, fl_oz, gal or each")

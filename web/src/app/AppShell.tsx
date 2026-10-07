@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useOnline } from "../lib/useOnline";
 import { AppProvider, useApp } from "./AppContext";
 
 export const TABS = [
@@ -15,6 +16,7 @@ export const TABS = [
 
 function Shell({ children }: { children: ReactNode }) {
   const { health, alertCount, backendError, demoMessage, setDemoMessage, loadDemo } = useApp();
+  const online = useOnline();
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const current = TABS.find((t) => pathname === `/${t.id}` || pathname.startsWith(`/${t.id}/`))?.id;
@@ -33,23 +35,35 @@ function Shell({ children }: { children: ReactNode }) {
           <p className="muted">Receipts in, cheapest shopping plan out.</p>
         </div>
         <div className="header-right">
-          {alertCount > 0 && (
-            <Link href="/prices" className="badge badge-ok" aria-label={`${alertCount} price-drop alerts`}>
+          {/* Always one element here, so the header height does not depend on the answer. */}
+          {alertCount > 0 ? (
+            <Link href="/prices" className="badge badge-ok">
               {alertCount} price {alertCount === 1 ? "drop" : "drops"} on your watchlist
             </Link>
+          ) : (
+            <span className="badge badge-pending">No price drops on your watchlist</span>
           )}
-          {health && (
-            <span className={`badge ${health.demo_mode ? "badge-warn" : "badge-ok"}`}>
-              {health.demo_mode ? "Demo mode (no API key)" : `LLM extraction: ${health.model}`}
-            </span>
-          )}
+          {/* Rendered before /api/health answers too, so the header keeps its height and the
+              page below does not jump when the badge text arrives (Lighthouse CLS). */}
+          <span
+            className={`badge ${health ? (health.demo_mode ? "badge-warn" : "badge-ok") : "badge-pending"}`}
+            role="status"
+          >
+            {health ? (health.demo_mode ? "Demo mode (no API key)" : `LLM extraction: ${health.model}`) : "Checking server..."}
+          </span>
           <button className="secondary" onClick={loadDemo}>
             Load synthetic demo data
           </button>
         </div>
       </header>
 
-      {backendError && (
+      {!online && (
+        <div className="alert warn offline-banner" role="status">
+          You are offline. Prices and insights show the last data this browser saw; saving and
+          planning need a connection.
+        </div>
+      )}
+      {backendError && online && (
         <div className="alert error" role="alert">
           Cannot reach the API ({backendError}). Start it with <code>make api</code>.
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import AppShell from "./AppShell";
+import ServiceWorker from "./ServiceWorker";
 import "../styles.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <AppShell>{children}</AppShell>
+        <ServiceWorker />
       </body>
     </html>
   );

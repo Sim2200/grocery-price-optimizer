@@ -103,7 +103,6 @@ export default function UploadPage({ onSaved, demoMode }: Props) {
           // Keyboard users can open the file picker with Enter or Space.
           role="button"
           tabIndex={0}
-          aria-label="Choose receipt photos or PDFs to upload"
           aria-busy={busy}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {

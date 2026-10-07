@@ -1,0 +1,449 @@
+{
+  "base": "http://localhost:8000",
+  "query": "chicken br",
+  "query_chars": 10,
+  "key_delay_ms": 120,
+  "trials": 20,
+  "runs": [
+    {
+      "debounce_ms": 200,
+      "network": "local (no throttling)",
+      "mean_requests_per_query": 1,
+      "mean_requests_cancelled": 0,
+      "time_to_results_p50_ms": 210,
+      "time_to_results_p95_ms": 212,
+      "samples": [
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 212
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 214
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 212
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 211
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 211
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 211
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 209
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 208
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 211
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 210
+        }
+      ]
+    },
+    {
+      "debounce_ms": 0,
+      "network": "local (no throttling)",
+      "mean_requests_per_query": 10,
+      "mean_requests_cancelled": 0,
+      "time_to_results_p50_ms": 1,
+      "time_to_results_p95_ms": 1,
+      "samples": [
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 2
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 1
+        }
+      ]
+    },
+    {
+      "debounce_ms": 200,
+      "network": "Fast 3G (562.5 ms RTT, 1.44 Mbps down)",
+      "mean_requests_per_query": 1,
+      "mean_requests_cancelled": 0,
+      "time_to_results_p50_ms": 773,
+      "time_to_results_p95_ms": 778,
+      "samples": [
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 770
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 771
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 771
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 776
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 778
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 775
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 771
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 774
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 772
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 782
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 773
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 775
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 768
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 773
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 775
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 773
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 772
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 777
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 772
+        },
+        {
+          "requests_sent": 1,
+          "requests_cancelled": 0,
+          "time_to_results_ms": 772
+        }
+      ]
+    },
+    {
+      "debounce_ms": 0,
+      "network": "Fast 3G (562.5 ms RTT, 1.44 Mbps down)",
+      "mean_requests_per_query": 10,
+      "mean_requests_cancelled": 9,
+      "time_to_results_p50_ms": 574,
+      "time_to_results_p95_ms": 578,
+      "samples": [
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 574
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 569
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 576
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 578
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 571
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 577
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 576
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 575
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 574
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 570
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 574
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 570
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 573
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 577
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 578
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 575
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 574
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 573
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 575
+        },
+        {
+          "requests_sent": 10,
+          "requests_cancelled": 9,
+          "time_to_results_ms": 578
+        }
+      ]
+    }
+  ]
+}

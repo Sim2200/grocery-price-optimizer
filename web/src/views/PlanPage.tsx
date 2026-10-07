@@ -12,6 +12,7 @@ import {
   type ShoppingItem,
 } from "../api";
 import ListAssistant from "../components/ListAssistant";
+import Typeahead from "../components/Typeahead";
 
 function PlanCard({ plan, title, highlight }: { plan: Plan; title: string; highlight?: boolean }) {
   return (
@@ -121,16 +122,14 @@ export default function PlanPage({ version }: { version: number }) {
         {items.length === 0 && <p className="muted">Add items or use the sample list.</p>}
         {items.map((it, i) => (
           <div key={i} className="row gap list-row">
-            <select
-              aria-label={`Item ${i + 1} product`}
+            <Typeahead
+              label={`Item ${i + 1} product`}
+              hideLabel
+              placeholder="Search products"
               value={it.product}
-              onChange={(e) => updateItem(i, { product: e.target.value })}
-            >
-              <option value="">choose a product</option>
-              {products.map((p) => (
-                <option key={p.name}>{p.name}</option>
-              ))}
-            </select>
+              onChange={(text) => updateItem(i, { product: text })}
+              onSelect={(hit) => updateItem(i, { product: hit.name })}
+            />
             <input
               className="num"
               type="number"

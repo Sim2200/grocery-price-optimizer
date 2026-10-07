@@ -1,30 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  api,
-  unitPrice,
-  type PriceMethod,
-  type PricePoint,
-  type PriceTable,
-  type WatchItem,
-} from "../api";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api, unitPrice, type PriceMethod, type PricePoint, type PriceTable, type WatchItem } from "../api";
+import { ErrorState, Skeleton, StaleBanner } from "../components/Status";
+import Typeahead from "../components/Typeahead";
 import Watchlist from "../components/Watchlist";
+import { useCachedQuery } from "../lib/useCachedQuery";
 
-const STORE_COLORS = ["#2563eb", "#16a34a", "#d97706", "#9333ea", "#dc2626", "#0891b2"];
+// Charts pull in the charting library; load it only when a product is selected.
+const PriceCharts = dynamic(() => import("../components/PriceCharts"), {
+  ssr: false,
+  loading: () => <div className="skeleton skeleton-chart" aria-hidden="true" />,
+});
 
 /** Product x store comparison table, charts for the selected product, and the watchlist. */
 export default function PricesPage({
@@ -35,20 +23,19 @@ export default function PricesPage({
   onWatchlistChanged: () => void;
 }) {
   const [method, setMethod] = useState<PriceMethod>("weighted");
-  const [table, setTable] = useState<PriceTable | null>(null);
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [history, setHistory] = useState<PricePoint[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  const fetchPrices = useCallback(() => api.prices(method), [method]);
+  const prices = useCachedQuery<PriceTable>(`prices:${method}`, fetchPrices, [version]);
+  const watchQuery = useCachedQuery<WatchItem[]>("watchlist", api.watchlist, [version]);
+  // Local copy so the watchlist can be updated optimistically.
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    api.prices(method).then(setTable).catch((e: Error) => setError(e.message));
-  }, [method, version]);
-
-  useEffect(() => {
-    api.watchlist().then(setWatchlist).catch((e: Error) => setError(e.message));
-  }, [version]);
+    if (watchQuery.data) setWatchlist(watchQuery.data);
+  }, [watchQuery.data]);
 
   function updateWatchlist(items: WatchItem[]) {
     setWatchlist(items);
@@ -57,65 +44,48 @@ export default function PricesPage({
 
   useEffect(() => {
     if (!selected) return;
-    api.priceHistory(selected).then(setHistory).catch((e: Error) => setError(e.message));
+    setHistoryError(null);
+    api.priceHistory(selected).then(setHistory).catch((e: Error) => setHistoryError(e.message));
   }, [selected, version]);
 
-  const rows = useMemo(
-    () =>
-      (table?.rows ?? []).filter(
-        (r) =>
-          r.product.toLowerCase().includes(filter.toLowerCase()) ||
-          r.category.toLowerCase().includes(filter.toLowerCase()),
-      ),
-    [table, filter],
-  );
-  const stores = table?.stores ?? [];
-  const selectedRow = table?.rows.find((r) => r.product === selected) ?? null;
-  const selectedWatch = watchlist.find((w) => w.product === selected) ?? null;
+  const table = prices.data;
+  const rows = useMemo(() => {
+    const f = filter.trim().toLowerCase();
+    return (table?.rows ?? []).filter(
+      (r) => r.product.toLowerCase().includes(f) || r.category.toLowerCase().includes(f),
+    );
+  }, [table, filter]);
 
-  const barData = selectedRow
-    ? stores
-        .filter((s) => selectedRow.prices[s])
-        .map((s) => ({ store: s, price: selectedRow.prices[s].price }))
-    : [];
-
-  // One series per store on a real time axis (dates are sparse and differ per store).
-  const historySeries = useMemo(() => {
-    const byStore = new Map<string, { t: number; price: number }[]>();
-    for (const p of history) {
-      const points = byStore.get(p.store) ?? [];
-      points.push({ t: new Date(p.date).getTime(), price: p.unit_price });
-      byStore.set(p.store, points);
-    }
-    return Array.from(byStore.entries()).map(([store, points]) => ({
-      store,
-      points: points.sort((a, b) => a.t - b.t),
-    }));
-  }, [history]);
-
-  if (error) return <div className="alert error">{error}</div>;
-  if (!table) return <p className="muted">Loading prices...</p>;
+  if (!table && prices.loading) return <Skeleton rows={8} label="Loading prices" />;
+  if (!table) return <ErrorState message={prices.error ?? "Could not load prices."} onRetry={prices.retry} />;
   if (table.rows.length === 0)
     return <p className="muted">No prices yet. Save a receipt or load the synthetic demo data.</p>;
 
+  const stores = table.stores;
+  const readOnly = prices.staleSince !== null;
+  const selectedRow = table.rows.find((r) => r.product === selected) ?? null;
+  const selectedWatch = watchlist.find((w) => w.product === selected) ?? null;
+
   return (
     <div className="stack">
-      <section className="card">
-        <div className="row gap spread">
-          <h2>Price comparison</h2>
-          <div className="row gap">
-            <input
-              type="search"
-              aria-label="Filter products or categories"
+      {prices.staleSince !== null && <StaleBanner since={prices.staleSince} onRetry={prices.retry} />}
+      <section className="card" aria-labelledby="prices-heading">
+        <div className="row gap spread toolbar">
+          <h2 id="prices-heading">Price comparison</h2>
+          <div className="row gap toolbar-controls">
+            <Typeahead
+              label="Filter products or categories"
+              hideLabel
               placeholder="Filter products or categories"
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={setFilter}
+              onSelect={(hit) => setSelected(hit.name)}
+              accept={(hit) => table.rows.some((r) => r.product === hit.name)}
             />
-            <select
-              aria-label="Price method"
-              value={method}
-              onChange={(e) => setMethod(e.target.value as PriceMethod)}
-            >
+            <label className="sr-only" htmlFor="price-method">
+              Price method
+            </label>
+            <select id="price-method" value={method} onChange={(e) => setMethod(e.target.value as PriceMethod)}>
               <option value="weighted">Recency-weighted price</option>
               <option value="latest">Latest price</option>
             </select>
@@ -126,7 +96,9 @@ export default function PricesPage({
           fairly. Cheapest store is highlighted. Select a row (click, or Tab then Enter) for charts.
         </p>
         <div className="table-wrap">
-          <table>
+          {/* On phones the table turns into one card per product (see .responsive-table in CSS);
+              data-label gives each cell its column name there. */}
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Product</th>
@@ -153,7 +125,7 @@ export default function PricesPage({
                     }
                   }}
                 >
-                  <td>
+                  <td className="cell-title">
                     {r.product} <span className="muted small">{r.category}</span>
                   </td>
                   {stores.map((s) => {
@@ -161,6 +133,7 @@ export default function PricesPage({
                     return (
                       <td
                         key={s}
+                        data-label={s}
                         className={`num ${r.cheapest_store === s ? "cheapest" : ""}`}
                         title={cell ? `${cell.n_observations} observation(s), last ${cell.last_seen}` : ""}
                       >
@@ -172,66 +145,15 @@ export default function PricesPage({
               ))}
             </tbody>
           </table>
+          {rows.length === 0 && <p className="muted">No products match "{filter}".</p>}
         </div>
       </section>
 
       {selectedRow && (
-        <section className="card">
-          <h2>{selectedRow.product}</h2>
-          <div className="charts">
-            <div>
-              <h3>Current price by store ($/{selectedRow.unit.replace("_", " ")})</h3>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={barData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="store" />
-                  <YAxis />
-                  <Tooltip formatter={(v) => unitPrice(Number(v), selectedRow.unit)} />
-                  <Bar dataKey="price" fill="#2563eb" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div>
-              <h3>Observed prices over time</h3>
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="t"
-                    type="number"
-                    scale="time"
-                    domain={["dataMin", "dataMax"]}
-                    tickFormatter={(t) => new Date(t).toISOString().slice(5, 10)}
-                  />
-                  <YAxis />
-                  <Tooltip
-                    labelFormatter={(t) => new Date(Number(t)).toISOString().slice(0, 10)}
-                    formatter={(v) => unitPrice(Number(v), selectedRow.unit)}
-                  />
-                  <Legend />
-                  {selectedWatch && (
-                    <ReferenceLine
-                      y={selectedWatch.target_price}
-                      stroke="#b91c1c"
-                      strokeDasharray="4 4"
-                      label={{ value: "your target", position: "insideTopRight", fontSize: 12 }}
-                    />
-                  )}
-                  {historySeries.map((series, i) => (
-                    <Line
-                      key={series.store}
-                      name={series.store}
-                      data={series.points}
-                      dataKey="price"
-                      stroke={STORE_COLORS[i % STORE_COLORS.length]}
-                      dot
-                      isAnimationActive={false}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        <section className="card" aria-labelledby="selected-heading">
+          <h2 id="selected-heading">{selectedRow.product}</h2>
+          {historyError && <div className="alert error" role="alert">{historyError}</div>}
+          <PriceCharts row={selectedRow} stores={stores} history={history} watch={selectedWatch} />
         </section>
       )}
 
@@ -239,6 +161,7 @@ export default function PricesPage({
         items={watchlist}
         products={table.rows.map((r) => ({ product: r.product, unit: r.unit }))}
         onChange={updateWatchlist}
+        readOnly={readOnly}
       />
     </div>
   );

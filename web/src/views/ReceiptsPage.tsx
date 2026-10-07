@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Skeleton } from "../components/Status";
 import { api, money, unitPrice, type Product, type ReceiptSummary, type SavedLineItem } from "../api";
 
 interface Props {
@@ -15,6 +16,7 @@ export default function ReceiptsPage({ version, onChanged }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [items, setItems] = useState<SavedLineItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([api.receipts(), api.products()])
@@ -22,7 +24,8 @@ export default function ReceiptsPage({ version, onChanged }: Props) {
         setReceipts(r);
         setProducts(p);
       })
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoaded(true));
   }, [version]);
 
   useEffect(() => {
@@ -50,9 +53,11 @@ export default function ReceiptsPage({ version, onChanged }: Props) {
     onChanged();
   }
 
+  if (!loaded) return <Skeleton rows={5} label="Loading receipts" />;
+
   return (
     <div className="stack">
-      {error && <div className="alert error">{error}</div>}
+      {error && <div className="alert error" role="alert">{error}</div>}
       <section className="card">
         <h2>Saved receipts</h2>
         {receipts.length === 0 ? (

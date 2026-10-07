@@ -1,0 +1,253 @@
+{
+  "runs": 3,
+  "profiles": {
+    "Fast 3G": {
+      "rtt_ms": 562.5,
+      "down_kbps": 1475
+    },
+    "Slow 3G": {
+      "rtt_ms": 2000,
+      "down_kbps": 400
+    }
+  },
+  "throttled": {
+    "before": {
+      "Fast 3G": {
+        "/prices": {
+          "median": {
+            "first_feedback_ms": 700,
+            "content_ms": 7543,
+            "js_kb": 812
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 711,
+              "content_ms": 7562,
+              "js_kb": 812
+            },
+            {
+              "first_feedback_ms": 700,
+              "content_ms": 7543,
+              "js_kb": 812
+            },
+            {
+              "first_feedback_ms": 697,
+              "content_ms": 7535,
+              "js_kb": 812
+            }
+          ]
+        },
+        "/insights": {
+          "median": {
+            "first_feedback_ms": 701,
+            "content_ms": 7025,
+            "js_kb": 774
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 700,
+              "content_ms": 7025,
+              "js_kb": 774
+            },
+            {
+              "first_feedback_ms": 701,
+              "content_ms": 7022,
+              "js_kb": 774
+            },
+            {
+              "first_feedback_ms": 706,
+              "content_ms": 7033,
+              "js_kb": 774
+            }
+          ]
+        }
+      },
+      "Slow 3G": {
+        "/prices": {
+          "median": {
+            "first_feedback_ms": 2151,
+            "content_ms": 25612,
+            "js_kb": 812
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 2151,
+              "content_ms": 25580,
+              "js_kb": 812
+            },
+            {
+              "first_feedback_ms": 2177,
+              "content_ms": 25612,
+              "js_kb": 812
+            },
+            {
+              "first_feedback_ms": 2147,
+              "content_ms": 25641,
+              "js_kb": 812
+            }
+          ]
+        },
+        "/insights": {
+          "median": {
+            "first_feedback_ms": 2146,
+            "content_ms": 25045,
+            "js_kb": 774
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 2146,
+              "content_ms": 25045,
+              "js_kb": 774
+            },
+            {
+              "first_feedback_ms": 2146,
+              "content_ms": 25061,
+              "js_kb": 774
+            },
+            {
+              "first_feedback_ms": 2147,
+              "content_ms": 24685,
+              "js_kb": 774
+            }
+          ]
+        }
+      }
+    },
+    "after": {
+      "Fast 3G": {
+        "/prices": {
+          "median": {
+            "first_feedback_ms": 700,
+            "content_ms": 3521,
+            "js_kb": 115
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 700,
+              "content_ms": 3520,
+              "js_kb": 115
+            },
+            {
+              "first_feedback_ms": 709,
+              "content_ms": 3524,
+              "js_kb": 115
+            },
+            {
+              "first_feedback_ms": 699,
+              "content_ms": 3521,
+              "js_kb": 115
+            }
+          ]
+        },
+        "/insights": {
+          "median": {
+            "first_feedback_ms": 699,
+            "content_ms": 3523,
+            "js_kb": 113
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 717,
+              "content_ms": 3532,
+              "js_kb": 113
+            },
+            {
+              "first_feedback_ms": 696,
+              "content_ms": 3523,
+              "js_kb": 113
+            },
+            {
+              "first_feedback_ms": 699,
+              "content_ms": 3517,
+              "js_kb": 113
+            }
+          ]
+        }
+      },
+      "Slow 3G": {
+        "/prices": {
+          "median": {
+            "first_feedback_ms": 2149,
+            "content_ms": 10995,
+            "js_kb": 115
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 2148,
+              "content_ms": 10997,
+              "js_kb": 115
+            },
+            {
+              "first_feedback_ms": 2149,
+              "content_ms": 10995,
+              "js_kb": 115
+            },
+            {
+              "first_feedback_ms": 2152,
+              "content_ms": 10991,
+              "js_kb": 115
+            }
+          ]
+        },
+        "/insights": {
+          "median": {
+            "first_feedback_ms": 2147,
+            "content_ms": 10989,
+            "js_kb": 113
+          },
+          "samples": [
+            {
+              "first_feedback_ms": 2147,
+              "content_ms": 10992,
+              "js_kb": 113
+            },
+            {
+              "first_feedback_ms": 2145,
+              "content_ms": 10986,
+              "js_kb": 113
+            },
+            {
+              "first_feedback_ms": 2149,
+              "content_ms": 10989,
+              "js_kb": 113
+            }
+          ]
+        }
+      }
+    }
+  },
+  "offline": {
+    "before": {
+      "/prices": {
+        "content_rendered": false,
+        "content_ms": null,
+        "offline_banner": false,
+        "stale_data_banner": false,
+        "watchlist_form_hidden": false
+      },
+      "/insights": {
+        "content_rendered": false,
+        "content_ms": null,
+        "offline_banner": false,
+        "stale_data_banner": false,
+        "watchlist_form_hidden": null
+      }
+    },
+    "after": {
+      "/prices": {
+        "content_rendered": true,
+        "content_ms": 379,
+        "offline_banner": true,
+        "stale_data_banner": true,
+        "watchlist_form_hidden": true
+      },
+      "/insights": {
+        "content_rendered": true,
+        "content_ms": 93,
+        "offline_banner": true,
+        "stale_data_banner": true,
+        "watchlist_form_hidden": null
+      }
+    }
+  }
+}
