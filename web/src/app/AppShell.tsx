@@ -35,10 +35,13 @@ function Shell({ children }: { children: ReactNode }) {
           <p className="muted">Receipts in, cheapest shopping plan out.</p>
         </div>
         <div className="header-right">
-          {alertCount > 0 && (
+          {/* Always one element here, so the header height does not depend on the answer. */}
+          {alertCount > 0 ? (
             <Link href="/prices" className="badge badge-ok">
               {alertCount} price {alertCount === 1 ? "drop" : "drops"} on your watchlist
             </Link>
+          ) : (
+            <span className="badge badge-pending">No price drops on your watchlist</span>
           )}
           {/* Rendered before /api/health answers too, so the header keeps its height and the
               page below does not jump when the badge text arrives (Lighthouse CLS). */}

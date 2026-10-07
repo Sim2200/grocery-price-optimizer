@@ -174,6 +174,10 @@ tr.clickable:focus-visible { outline-offset: -3px; }
   .app { padding: 1rem 0.75rem 3rem; }
   h1 { font-size: 1.25rem; }
   .header { align-items: flex-start; }
+  /* One status item per line: the header's height is then fixed by the number of items, not by
+     how long their text is after the server answers (which was a layout shift on load). */
+  .header-right { flex-direction: column; align-items: flex-start; gap: 0.5rem; width: 100%; }
+  .header-right > button { align-self: stretch; }
   /* One scrollable row of tabs instead of wrapping onto several lines. */
   .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .tab { white-space: nowrap; padding: 0.6rem 0.75rem; }
