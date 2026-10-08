@@ -28,7 +28,7 @@ By **Simran Kharbanda**
 | **Approach** | LLM vision extraction with a JSON schema, then a person reviews the draft, then hybrid product matching (aliases → rules → fuzzy → optional LLM), unit-price normalization, and a mixed-integer program that chooses the stores. |
 | **Features** | Receipt upload with review, price comparison and history, trip planning, a watchlist with price-drop alerts, a recipe/list assistant ("tacos for 4"), and spending insights that replay past trips through the planner. |
 | **Stack** | Python · FastAPI · Pydantic · SQLAlchemy 2 (SQLite or Postgres) · PuLP/CBC · rapidfuzz · Anthropic API · React 19 / Next.js 15 (TypeScript, static export) · Recharts · Vitest · Playwright |
-| **Operations** | Docker (multi-stage), Compose with Prometheus/Grafana/Jaeger, JSON logs with request IDs, Prometheus metrics, OpenTelemetry traces, a Helm chart, plan-only Terraform for AWS, GitHub Actions CI. |
+| **Operations** | Docker (multi-stage), Compose with Prometheus/Grafana/Jaeger, JSON logs with request IDs, Prometheus metrics, OpenTelemetry traces, a Helm chart, Terraform for AWS (applied once to EKS + RDS, measured, destroyed), GitHub Actions CI. |
 | **Key results** *(synthetic)* | Over 500 random lists at a $2 trip cost, the plan saves **8.2% vs the best single store** and **5.4% vs per-item greedy**, in about 20 ms per plan. Rules + fuzzy matching auto-matches **106/106** synthetic names and **34/37** hand-written ones, with **0 wrong auto-matches**. |
 | **Quality** | 164 pytest tests (no network needed; LLM calls are mocked), a brute-force cross-check of the optimizer, 25 Vitest component and unit tests, 31 Playwright browser tests (main flow plus overflow checks at five widths), Lighthouse CI budgets, a TypeScript type check, three eval scripts, and CI on every push. |
 
@@ -408,7 +408,7 @@ The longer write-up, including what did not help and how to reproduce, is in [do
 | Extraction accuracy on real, crumpled thermal receipts isn't measured | A hand-labeled real receipt set (see below) |
 | Single-user app with no auth | User accounts, and schema migrations (Alembic) for Postgres |
 | The list assistant's offline mode knows only three recipes | More recipes, or always use the LLM when a key is set |
-| Redis is provisioned in Terraform but not used yet | Cache the price table and plans |
+| Redis is defined in Terraform (off by default) but not used yet | Cache the price table and plans |
 
 Other smaller points: store-brand and name-brand products share one canonical product, and
 branches of the same chain share prices.
@@ -464,7 +464,7 @@ flowchart LR
     GH[GitHub Actions<br/>pytest · typecheck · build<br/>docker build + smoke test<br/>helm lint · terraform validate] --> IMG[Docker image<br/>React build + FastAPI]
     IMG --> DC[Docker Compose<br/>app · Prometheus · Grafana · Jaeger]
     IMG --> K8S[Helm chart<br/>kind / minikube / EKS]
-    TF[Terraform, plan-only<br/>VPC · EKS · RDS Postgres · ElastiCache] -.-> K8S
+    TF[Terraform<br/>VPC · EKS · RDS Postgres · optional ElastiCache] --> K8S
     K8S --> RDS[(Postgres via DATABASE_URL)]
 ```
 
@@ -477,7 +477,7 @@ flowchart LR
 | **Probes** | `api/app.py` | `/healthz` (process is up) for liveness, `/readyz` (database answers) for readiness |
 | **Docker** | `Dockerfile`, `docker-compose.yml` | `make docker-build`, or `docker compose up --build`: app on :8000, Prometheus :9090, Grafana :3000 (provisioned "Grocery Optimizer" dashboard), Jaeger :16686 |
 | **Kubernetes** | `deploy/helm/grocery-optimizer` | `make kind-up && make kind-deploy`, then `kubectl port-forward svc/grocery-grocery-optimizer 8000:80`. Secrets (API key, `DATABASE_URL`) come from a Secret you create (see `values.yaml`) |
-| **AWS** | `deploy/terraform` | `make tf-validate` (no AWS calls) or `make tf-plan` (needs credentials). There is deliberately no apply target, and nothing has been applied |
+| **AWS** | `deploy/terraform`, `deploy/aws/deploy.sh` | `make tf-validate` (no AWS calls) or `make tf-plan` (needs credentials); `terraform apply` is run by hand. Applied once on 2026-10-07 in us-east-2: EKS 1.35 with 2 x m7i-flex.large nodes, RDS Postgres 16 (db.t4g.micro), the image from ECR, 2 pods behind a load balancer, the database password from Secrets Manager. The app was healthy 80 s after `helm install`, the Playwright main flow passed against the public URL, and from a laptop p50 / p95 latency was 57 / 142 ms for `/api/health`, 68 / 186 ms for `/api/prices` and 154 / 250 ms for `/api/insights` (`results/aws_deploy.json`, `scripts/aws_measure.py`). Everything was destroyed the same day. Free-plan lessons are in the Terraform comments: only Free-Tier-eligible instance types launch, RDS backup retention is capped at 1 day, IAM OIDC providers cannot be created. |
 | **CI** | `.github/workflows/ci.yml` | Runs on every push and PR |
 
 With the default SQLite volume the chart runs one replica. To scale out or enable the HPA, point
