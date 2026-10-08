@@ -23,9 +23,9 @@ variable "vpc_cidr" {
 }
 
 variable "kubernetes_version" {
-  description = "EKS control plane version."
+  description = "EKS control plane version. Keep it inside standard support: extended support bills the control plane at 6x."
   type        = string
-  default     = "1.31"
+  default     = "1.35"
 }
 
 variable "node_instance_type" {
@@ -86,4 +86,16 @@ variable "deletion_protection" {
   description = "Protect the database from accidental deletion. Turn on for production."
   type        = bool
   default     = false
+}
+
+variable "enable_redis" {
+  description = "Create the ElastiCache Redis cluster. The app does not use it yet, so it is off by default."
+  type        = bool
+  default     = false
+}
+
+variable "db_backup_retention_days" {
+  description = "Automated backup retention for RDS. 1 is the maximum on the AWS Free plan; 7 or more for production."
+  type        = number
+  default     = 1
 }

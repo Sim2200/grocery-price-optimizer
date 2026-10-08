@@ -29,6 +29,6 @@ output "database_url_template" {
 }
 
 output "redis_endpoint" {
-  description = "ElastiCache primary endpoint (TLS on port 6379)."
-  value       = aws_elasticache_replication_group.redis.primary_endpoint_address
+  description = "ElastiCache primary endpoint (TLS on port 6379); null unless enable_redis."
+  value       = var.enable_redis ? aws_elasticache_replication_group.redis[0].primary_endpoint_address : null
 }

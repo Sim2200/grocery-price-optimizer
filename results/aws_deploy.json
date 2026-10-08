@@ -1,0 +1,93 @@
+{
+  "measured_at": "2026-10-08T03:02:26.786867+00:00",
+  "region": "us-east-2",
+  "cluster": "grocery-optimizer-dev",
+  "url": "http://a1dc6398e52c84e3eb773d369d6b907b-1784576579.us-east-2.elb.amazonaws.com",
+  "time_to_healthy_s": 80.1,
+  "health": {
+    "readyz_status": 200,
+    "api_health_status": 200,
+    "api_health_body": {
+      "status": "ok",
+      "demo_mode": true,
+      "extractor": "demo",
+      "model": ""
+    }
+  },
+  "demo_receipts_loaded": 16,
+  "latency": {
+    "/api/health": {
+      "p50_ms": 57.1,
+      "p95_ms": 141.88,
+      "errors": 0,
+      "n": 50
+    },
+    "/api/prices?method=weighted": {
+      "p50_ms": 67.6,
+      "p95_ms": 186.03,
+      "errors": 0,
+      "n": 50
+    },
+    "/api/insights?trip_cost=5": {
+      "p50_ms": 154.18,
+      "p95_ms": 249.65,
+      "errors": 0,
+      "n": 50
+    },
+    "/": {
+      "p50_ms": 60.05,
+      "p95_ms": 137.5,
+      "errors": 0,
+      "n": 50
+    }
+  },
+  "plan": {
+    "latency_ms": 92.01,
+    "savings_vs_single_store": {
+      "amount": 0.0,
+      "percent": 0.0
+    }
+  },
+  "gzip": true,
+  "kubernetes": {
+    "node_count": 2,
+    "instance_types": [
+      "m7i-flex.large"
+    ],
+    "kubelet_versions": [
+      "v1.35.8-eks-3b4a6ca"
+    ],
+    "pods": [
+      {
+        "phase": "Running",
+        "ready": 1,
+        "restart_count": 0,
+        "image": "696073197823.dkr.ecr.us-east-2.amazonaws.com/grocery-optimizer:694960d"
+      },
+      {
+        "phase": "Running",
+        "ready": 1,
+        "restart_count": 0,
+        "image": "696073197823.dkr.ecr.us-east-2.amazonaws.com/grocery-optimizer:694960d"
+      }
+    ],
+    "loadbalancer_hostname": "a1dc6398e52c84e3eb773d369d6b907b-1784576579.us-east-2.elb.amazonaws.com"
+  },
+  "eks": {
+    "version": "1.35",
+    "platformVersion": "eks.24"
+  },
+  "rds": {
+    "instances": [
+      {
+        "engine": "postgres",
+        "engine_version": "16.13",
+        "instance_class": "db.t4g.micro",
+        "allocated_storage_gb": 20,
+        "multi_az": false
+      }
+    ]
+  },
+  "nat_gateways": 1,
+  "notes": "Single run from a laptop over the public internet; latencies include the network path to us-east-2. time_to_healthy_s is from the first measurement right after `helm install` (the load balancer needed about 80 s to start routing); the latency numbers are from a second run minutes later."
+}

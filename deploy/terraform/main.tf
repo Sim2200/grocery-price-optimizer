@@ -2,9 +2,9 @@
 #   VPC (public + private + database + cache subnets)
 #   EKS cluster with one managed node group     -> runs the Helm chart
 #   RDS Postgres                                -> DATABASE_URL for the app
-#   ElastiCache Redis                           -> a cache (not used by the app yet)
+#   ElastiCache Redis (optional, off by default) -> a cache (not used by the app yet)
 #
-# Plan only: `terraform plan` shows what would be created. Nothing here has been applied.
+# Applied for real on 2026-10-07 in us-east-2 (see results/aws_deploy.json) and destroyed afterwards.
 
 data "aws_availability_zones" "available" {
   state = "available"
@@ -63,6 +63,10 @@ module "eks" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
+  # No IAM OIDC provider: the app has no pods that need AWS credentials, and the Free-plan
+  # account used for the deployment does not allow creating one.
+  enable_irsa = false
+
   eks_managed_node_groups = {
     default = {
       instance_types = [var.node_instance_type]
@@ -110,7 +114,8 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.db.id]
   publicly_accessible    = false
 
-  backup_retention_period = 7
+  # The AWS Free plan caps backup retention at 1 day (longer values are rejected at create time).
+  backup_retention_period = var.db_backup_retention_days
   deletion_protection     = var.deletion_protection
   skip_final_snapshot     = !var.deletion_protection
 }
@@ -118,6 +123,7 @@ resource "aws_db_instance" "postgres" {
 # ----- Redis (ElastiCache) ----------------------------------------------------------------
 
 resource "aws_security_group" "redis" {
+  count       = var.enable_redis ? 1 : 0
   name        = "${local.name}-redis"
   description = "Redis, reachable only from the EKS worker nodes"
   vpc_id      = module.vpc.vpc_id
@@ -132,6 +138,7 @@ resource "aws_security_group" "redis" {
 }
 
 resource "aws_elasticache_replication_group" "redis" {
+  count                = var.enable_redis ? 1 : 0
   replication_group_id = "${local.name}-redis"
   description          = "Cache for ${local.name}"
 
@@ -143,7 +150,7 @@ resource "aws_elasticache_replication_group" "redis" {
   parameter_group_name = "default.redis7"
 
   subnet_group_name  = module.vpc.elasticache_subnet_group_name
-  security_group_ids = [aws_security_group.redis.id]
+  security_group_ids = [aws_security_group.redis[0].id]
 
   at_rest_encryption_enabled = true
   transit_encryption_enabled = true

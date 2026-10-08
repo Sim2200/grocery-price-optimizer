@@ -1,3 +1,6 @@
 # Copy to terraform.tfvars and adjust. terraform.tfvars is git-ignored.
 region      = "us-east-1"
 environment = "dev"
+
+# On the AWS Free plan only Free-Tier-eligible instance types launch, for example:
+# node_instance_type = "m7i-flex.large"
